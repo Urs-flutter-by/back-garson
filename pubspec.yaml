@@ -1,0 +1,21 @@
+name: back_garson
+description: A new Dart Frog application
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  dart_frog: ^1.2.0
+  postgres: ^3.5.6
+  equatable: ^2.0.7
+  json_annotation: ^4.9.0
+  uuid: ^4.5.1
+
+dev_dependencies:
+  mocktail: ^1.0.3
+  test: ^1.25.5
+  very_good_analysis: ^5.1.0
+  build_runner: ^2.4.8
+  json_serializable: ^6.8.0
