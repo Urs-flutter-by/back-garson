@@ -1,15 +1,18 @@
 import 'package:back_garson/data/models/dish_model.dart';
 import 'package:back_garson/domain/entities/order_item.dart';
 
+/// реализация модели заказов
 class OrderItemModel extends OrderItem {
   OrderItemModel({
     required super.dishId,
     required super.quantity,
-    super.dish, // Сделали dish опциональным
-    required super.status,
+    required super.status, super.dish,
     super.createdAt,
     super.confirmedAt,
     super.completedAt,
+    super.comment,
+    super.course = 1,
+    super.serveAt,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +32,11 @@ class OrderItemModel extends OrderItem {
       completedAt: json['completedAt'] != null
           ? DateTime.parse(json['completedAt'] as String)
           : null,
+      comment: json['comment'] as String?,
+      course: json['course'] as int? ?? 1, // По умолчанию 1
+      serveAt: json['serveAt'] != null
+          ? DateTime.parse(json['serveAt'] as String)
+          : null,
     );
   }
 
@@ -36,11 +44,14 @@ class OrderItemModel extends OrderItem {
     return {
       'dishId': dishId,
       'quantity': quantity,
-      if (dish != null) 'dish': (dish as DishModel).toJson(),
+      if (dish != null) 'dish': (dish! as DishModel).toJson(),
       'status': status,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (confirmedAt != null) 'confirmedAt': confirmedAt!.toIso8601String(),
       if (completedAt != null) 'completedAt': completedAt!.toIso8601String(),
+      if (comment != null) 'comment': comment,
+      'course': course,
+      if (serveAt != null) 'serveAt': serveAt!.toIso8601String(),
     };
   }
 }

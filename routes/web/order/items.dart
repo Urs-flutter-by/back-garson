@@ -36,6 +36,9 @@ Future<Response> onRequest(RequestContext context) async {
     final items = itemsJson.map((itemJson) {
       final dishId = itemJson['dishId'] as String?;
       final quantityRaw = itemJson['quantity'];
+      final comment = itemJson['comment'] as String?;
+      final courseRaw = itemJson['course'];
+      final serveAt = itemJson['serveAt'] as String?;
 
       if (dishId == null) {
         throw Exception('dishId is required');
@@ -44,12 +47,25 @@ Future<Response> onRequest(RequestContext context) async {
           ? quantityRaw
           : int.tryParse(quantityRaw.toString()) ??
               (throw Exception('Invalid quantity: $quantityRaw'));
+      final course = courseRaw is int
+          ? courseRaw
+          : int.tryParse(courseRaw?.toString() ?? '1') ?? 1;
+      if (course < 1 || course > 10) {
+        throw Exception('Invalid course: must be between 1 and 10');
+      }
+      final serveAtDate = serveAt != null ? DateTime.tryParse(serveAt) : null;
+      if (serveAt != null && serveAtDate == null) {
+        throw Exception('Invalid serveAt: must be a valid ISO 8601 date');
+      }
 
       return OrderItemModel(
         dishId: dishId,
         quantity: quantity,
         status: 'new',
-        dish: null, // dish не передаём, так как его нет в JSON
+        dish: null,
+        comment: comment,
+        course: course,
+        serveAt: serveAtDate,
       );
     }).toList();
 
