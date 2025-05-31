@@ -15,7 +15,8 @@ Future<Response> onRequest(RequestContext context) async {
 
     final payload = await request.json() as Map<String, dynamic>;
 
-    final tableNumber = payload['tableNumber'] as int?;
+    final tableNumber = payload['tableNumber'] as String?;
+
     final requestsData = payload['requests'] as List<dynamic>?;
 
     if (tableNumber == null || requestsData == null) {
@@ -44,8 +45,8 @@ Future<Response> onRequest(RequestContext context) async {
     return Response.json(
       body: {'message': 'Waiter requests created successfully'},
     );
-  } catch (e) {
-    // print('❌ Ошибка в обработке запроса: $e\n$stackTrace');
+  } catch (e, stackTrace) {
+     print('❌ Ошибка в обработке запроса: $e\n$stackTrace');
     return Response.json(
       statusCode: HttpStatus.badRequest,
       body: {'error': 'Failed to create waiter requests: $e'},

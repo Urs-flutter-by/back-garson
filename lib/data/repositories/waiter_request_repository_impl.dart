@@ -10,7 +10,7 @@ class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
 
   @override
   Future<void> createWaiterRequests(
-      int tableId, List<WaiterRequest> requests,) async {
+      String tableId, List<WaiterRequest> requests,) async {
     final conn = await database.connection;
 
     try {

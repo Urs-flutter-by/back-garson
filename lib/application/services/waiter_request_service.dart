@@ -7,7 +7,7 @@ class WaiterRequestService {
   WaiterRequestService(this.repository);
 
   Future<void> createWaiterRequests(
-      int tableId, List<WaiterRequest> requests) async {
+      String tableId, List<WaiterRequest> requests) async {
     await repository.createWaiterRequests(tableId, requests);
   }
 }
