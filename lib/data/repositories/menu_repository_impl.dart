@@ -25,7 +25,7 @@ class MenuRepositoryImpl implements MenuRepository {
         WHERE restaurant_id = $1
       )
       ''',
-      parameters: [int.parse(restaurantId)],
+      parameters: [restaurantId],
     );
 
     final categories = <CategoryModel>[];
@@ -40,7 +40,7 @@ class MenuRepositoryImpl implements MenuRepository {
         FROM dishes
         WHERE category_id = $1 AND restaurant_id = $2
         ''',
-        parameters: [int.parse(categoryId), int.parse(restaurantId)],
+        parameters: [int.parse(categoryId), restaurantId],
       );
 
       final dishes = dishesResult.map((dishRow) {
@@ -50,12 +50,12 @@ class MenuRepositoryImpl implements MenuRepository {
 
         return DishModel(
           id: dishRow[0].toString(),
-          name: dishRow[1] as String,
+          name: dishRow[1]! as String,
           description: dishRow[2] as String? ?? '',
           price: price,
           weight: dishRow[4] as String? ?? '',
           imageUrls: (dishRow[5] as List<dynamic>?)?.cast<String>() ?? [],
-          isAvailable: dishRow[6] as bool,
+          isAvailable: dishRow[6]! as bool,
         );
       }).toList();
 
@@ -63,7 +63,7 @@ class MenuRepositoryImpl implements MenuRepository {
         id: categoryId,
         name: categoryName,
         dishes: dishes,
-      ));
+      ),);
     }
 
     return MenuModel(categories: categories);

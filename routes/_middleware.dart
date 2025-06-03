@@ -1,9 +1,13 @@
 import 'package:back_garson/application/services/menu_service.dart';
 import 'package:back_garson/application/services/order_service.dart';
+import 'package:back_garson/application/services/restaurant_service.dart';
+import 'package:back_garson/application/services/restaurant_theme_service.dart';
 import 'package:back_garson/application/services/table_service.dart';
 import 'package:back_garson/application/services/waiter_request_service.dart';
 import 'package:back_garson/data/repositories/menu_repository_impl.dart';
 import 'package:back_garson/data/repositories/order_repository_impl.dart';
+import 'package:back_garson/data/repositories/restaurant_repository_impl.dart';
+import 'package:back_garson/data/repositories/restaurant_theme_repository_impl.dart';
 import 'package:back_garson/data/repositories/table_repository_impl.dart';
 import 'package:back_garson/data/repositories/waiter_request_repository_impl.dart';
 import 'package:back_garson/data/sources/database.dart';
@@ -17,6 +21,9 @@ Handler middleware(Handler handler) {
     final menuService = MenuService(MenuRepositoryImpl(db));
     final waiterRequestService =
         WaiterRequestService(WaiterRequestRepositoryImpl(db));
+    final restaurantService = RestaurantService(RestaurantRepositoryImpl(db));
+    final restaurantThemeService =
+        RestaurantThemeService(RestaurantThemeRepositoryImpl(db));
 
     //final
 
@@ -34,13 +41,14 @@ Handler middleware(Handler handler) {
 
     //print('🔍 Middleware: Предоставление зависимостей в контекст');
     final updatedContext = context
-    //   .provide<DatabaseSource>(() => db) ????
+        //   .provide<DatabaseSource>(() => db) ????
         .provide<DatabaseSource>(() => db)
         .provide<TableService>(() => tableService)
         .provide<OrderService>(() => orderService)
         .provide<MenuService>(() => menuService)
-        .provide<WaiterRequestService>(() => waiterRequestService);
-
+        .provide<WaiterRequestService>(() => waiterRequestService)
+        .provide<RestaurantService>(() => restaurantService)
+        .provide<RestaurantThemeService>(() => restaurantThemeService);
 
     //print('🔍 Middleware: Выполнение handler');
     final response = await handler(updatedContext);

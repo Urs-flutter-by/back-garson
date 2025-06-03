@@ -13,16 +13,16 @@ class Table extends Equatable {
   final String status;
   final int capacity;
   final int number;
-  final String restaurantName;
+  final String  restaurantId;
 
   const Table({
     required this.id,
     required this.status,
     required this.capacity,
     required this.number,
-    required this.restaurantName,
+    required this.restaurantId,
   });
 
   @override
-  List<Object?> get props => [id, status, capacity, number, restaurantName];
+  List<Object?> get props => [id, status, capacity, number, restaurantId];
 }

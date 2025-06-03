@@ -18,9 +18,9 @@ class TableRepositoryImpl implements TableRepository {
     try {
       final result = await conn.execute(
         r'''
-        SELECT t.id, t.status, t.capacity, t.number, r.name as restaurantName
+        SELECT t.id, t.status, t.capacity, t.number, r.id as restaurantId
         FROM tables t
-        JOIN restaurants r ON t.restaurant_id = r.id
+        LEFT JOIN restaurants r ON t.restaurant_id = r.id
         WHERE t.id = $1
         ''',
         parameters: [id], // Передаём строку UUID
@@ -31,11 +31,11 @@ class TableRepositoryImpl implements TableRepository {
       }
 
       return TableModel.fromJson({
-        'id': result[0][0] as String,
-        'status': result[0][1] as String,
-        'capacity': result[0][2] as int,
-        'number': result[0][3] as int,
-        'restaurantName': result[0][4] as String,
+        'id': result[0][0]! as String,
+        'status': result[0][1]! as String,
+        'capacity': result[0][2]! as int,
+        'number': result[0][3]! as int,
+        'restaurantId': result[0][4]! as String,
       });
     } finally {
       await conn.close();

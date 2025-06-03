@@ -13,7 +13,7 @@ class TableModel extends Table {
     required super.status,
     required super.capacity,
     required super.number,
-    required super.restaurantName,
+    required super.restaurantId,
   });
 
   factory TableModel.fromJson(Map<String, dynamic> json) {
@@ -22,7 +22,7 @@ class TableModel extends Table {
       status: json['status'] as String,
       capacity: json['capacity'] as int,
       number: json['number'] as int,
-      restaurantName: json['restaurantName'] as String, // Изменяем ключ
+      restaurantId: json['restaurantId'] as String, // Изменяем ключ
     );
   }
 
@@ -32,7 +32,7 @@ class TableModel extends Table {
       'status': status,
       'capacity': capacity,
       'number': number,
-      'restaurantName': restaurantName, // Меняем ключ на restaurantName
+      'restaurantId': restaurantId, // Меняем ключ на restaurantName
     };
   }
 }

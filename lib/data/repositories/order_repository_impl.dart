@@ -12,54 +12,7 @@ class OrderRepositoryImpl implements OrderRepository {
 
   OrderRepositoryImpl(this.database);
 
-  // @override
-  // Future<Order> createOrder(String tableId) async {
-  //   final conn = await database.connection;
-  //
-  //   try {
-  //     // Проверяем, существует ли столик и получаем restaurant_id
-  //     final tableResult = await conn.execute(
-  //       r'''
-  //       SELECT t.id, t.restaurant_id
-  //       FROM tables t
-  //       WHERE t.id = $1
-  //       ''',
-  //       parameters: [int.parse(tableId)],
-  //     );
-  //
-  //     if (tableResult.isEmpty) {
-  //       throw Exception('Table not found');
-  //     }
-  //
-  //     final restaurantId = tableResult[0][1].toString();
-  //
-  //     // Генерируем уникальный orderId
-  //     final orderId = const Uuid().v4();
-  //
-  //     // Создаём новый заказ
-  //     final orderResult = await conn.execute(
-  //       r'''
-  //       INSERT INTO orders (order_id, table_id, restaurant_id, status)
-  //       VALUES ($1, $2, $3, 'new')
-  //       RETURNING order_id
-  //       ''',
-  //       parameters: [orderId, int.parse(tableId), int.parse(restaurantId)],
-  //     );
-  //
-  //     if (orderResult.isEmpty) {
-  //       throw Exception('Failed to create order');
-  //     }
-  //
-  //     return OrderModel(
-  //       orderId: orderId,
-  //       items: [],
-  //     );
-  //   } catch (e) {
-  //     throw Exception('Failed to create order: $e');
-  //   } finally {
-  //     await conn.close();
-  //   }
-  // }
+
   @override
   Future<Order> createOrder(String tableId) async {
     final conn = await database.connection;
@@ -87,7 +40,7 @@ class OrderRepositoryImpl implements OrderRepository {
       VALUES ($1, $2, $3, 'new')
       RETURNING order_id
       ''',
-        parameters: [orderId, tableId, int.parse(restaurantId)],
+        parameters: [orderId, tableId, restaurantId],
       );
 
       if (orderResult.isEmpty) {

@@ -10,6 +10,7 @@ Future<Response> onRequest(RequestContext context, String tableId) async {
 
   try {
     final order = await service.createOrder(tableId);
+
     return Response.json(body: {
       'orderId': order.orderId,
     },);

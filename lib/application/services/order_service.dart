@@ -1,7 +1,6 @@
 import 'package:back_garson/domain/entities/order.dart';
+import 'package:back_garson/domain/entities/order_item.dart';
 import 'package:back_garson/domain/repositories/order_repository.dart';
-
-import '../../domain/entities/order_item.dart';
 
 class OrderService {
   final OrderRepository repository;
