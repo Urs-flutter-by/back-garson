@@ -2,13 +2,17 @@ import 'package:back_garson/application/services/menu_service.dart';
 import 'package:back_garson/application/services/order_service.dart';
 import 'package:back_garson/application/services/restaurant_service.dart';
 import 'package:back_garson/application/services/restaurant_theme_service.dart';
+import 'package:back_garson/application/services/shift_service.dart';
 import 'package:back_garson/application/services/table_service.dart';
 import 'package:back_garson/application/services/waiter_request_service.dart';
+import 'package:back_garson/application/services/waiter_service.dart';
 import 'package:back_garson/data/repositories/menu_repository_impl.dart';
 import 'package:back_garson/data/repositories/order_repository_impl.dart';
 import 'package:back_garson/data/repositories/restaurant_repository_impl.dart';
 import 'package:back_garson/data/repositories/restaurant_theme_repository_impl.dart';
+import 'package:back_garson/data/repositories/shift_repository_impl.dart';
 import 'package:back_garson/data/repositories/table_repository_impl.dart';
+import 'package:back_garson/data/repositories/waiter_repository_iml.dart';
 import 'package:back_garson/data/repositories/waiter_request_repository_impl.dart';
 import 'package:back_garson/data/sources/database.dart';
 import 'package:dart_frog/dart_frog.dart';
@@ -24,6 +28,8 @@ Handler middleware(Handler handler) {
     final restaurantService = RestaurantService(RestaurantRepositoryImpl(db));
     final restaurantThemeService =
         RestaurantThemeService(RestaurantThemeRepositoryImpl(db));
+    final waiterService = WaiterService(WaiterRepositoryImpl(db));
+    final shiftService = ShiftService(ShiftRepositoryImpl(db));
 
     //final
 
@@ -48,11 +54,14 @@ Handler middleware(Handler handler) {
         .provide<MenuService>(() => menuService)
         .provide<WaiterRequestService>(() => waiterRequestService)
         .provide<RestaurantService>(() => restaurantService)
-        .provide<RestaurantThemeService>(() => restaurantThemeService);
+        .provide<RestaurantThemeService>(() => restaurantThemeService)
+        .provide<WaiterService>(() => waiterService)
+        .provide<ShiftService>(() => shiftService);
 
     //print('🔍 Middleware: Выполнение handler');
     final response = await handler(updatedContext);
-    //print('✅ Middleware: Ответ получен, добавление CORS заголовков');
+    // Логируем ответ
+    print('${DateTime.now()}: Response status: ${response.statusCode}');
     return response.copyWith(
       headers: {...response.headers, ...corsHeaders},
     );
