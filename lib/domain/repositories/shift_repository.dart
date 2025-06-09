@@ -1,7 +1,6 @@
 // lib/domain/repositories/shift_repository.dart
-import 'package:back_garson/data/models/shift_model.dart';
 
-import '../entities/shift.dart';
+import 'package:back_garson/domain/entities/shift.dart';
 
 abstract class ShiftRepository {
   Future<Shift> checkShift(String waiterId);
