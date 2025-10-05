@@ -6,7 +6,8 @@ class OrderItemModel extends OrderItem {
   OrderItemModel({
     required super.dishId,
     required super.quantity,
-    required super.status, super.dish,
+    required super.status,
+    super.dish,
     super.createdAt,
     super.confirmedAt,
     super.completedAt,

@@ -1,21 +1,20 @@
-import 'package:back_garson/data/sources/database.dart';
 import 'package:back_garson/domain/entities/waiter_request.dart';
 import 'package:back_garson/domain/repositories/waiter_request_repository.dart';
+import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
 class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
-  final DatabaseSource database;
+  final Pool pool;
 
-  WaiterRequestRepositoryImpl(this.database);
+  WaiterRequestRepositoryImpl(this.pool);
 
   @override
   Future<void> createWaiterRequests(
-      String tableId, List<WaiterRequest> requests,) async {
-    final conn = await database.connection;
-
+    String tableId,
+    List<WaiterRequest> requests,
+  ) async {
     try {
-      await conn.runTx((ctx) async {
-        //('🔍 Проверка стола: tableId=$tableId');
+      await pool.runTx((ctx) async {
         final tableResult = await ctx.execute(
           r'''
           SELECT id FROM tables WHERE id = $1
@@ -27,7 +26,6 @@ class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
           throw Exception('Table with id $tableId not found');
         }
 
-        // Проверяем существующие request_id
         final requestIds = requests.map((r) => r.requestId).toList();
 
         final existingIdsResult = await ctx.execute(
@@ -46,7 +44,8 @@ class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
 
           if (!Uuid.isValidUUID(fromString: request.requestId)) {
             throw Exception(
-                'Invalid UUID format for requestId: ${request.requestId}',);
+              'Invalid UUID format for requestId: ${request.requestId}',
+            );
           }
 
           await ctx.execute(
@@ -65,9 +64,8 @@ class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
         }
       });
     } catch (e) {
+      print('Error in createWaiterRequests: $e');
       throw Exception('Failed to create waiter requests: $e');
-    } finally {
-      await conn.close();
     }
   }
 }

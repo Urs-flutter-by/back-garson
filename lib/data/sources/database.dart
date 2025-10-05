@@ -1,30 +1,55 @@
 import 'package:back_garson/utils/config.dart';
 import 'package:postgres/postgres.dart';
 
-//класс DatabaseSource для управления подключением к PostgreSQL.
-//Этот класс отвечает за создание и закрытие соединения с базой данных.
-// Он используется в table_repository_impl.dart для выполнения запросов
-
+/// Глобальный класс для управления пулом соединений с базой данных.
+/// Использует паттерн Singleton, чтобы экземпляр был один на все приложение.
 class DatabaseSource {
-  DatabaseSource() {
-    _connection = Connection.open(
-      Endpoint(
-        host: Config.dbHost,
-        port: Config.dbPort,
-        database: Config.dbName,
-        username: Config.dbUser,
-        password: Config.dbPassword,
-      ),
-      settings: const ConnectionSettings(sslMode: SslMode.disable),
+  // Приватный конструктор
+  DatabaseSource._();
+
+  // Статический экземпляр класса (Singleton)
+  static final DatabaseSource instance = DatabaseSource._();
+
+  late final Pool _pool;
+  bool _isInitialized = false;
+
+  /// Инициализирует пул соединений.
+  /// Этот метод нужно вызвать один раз при старте сервера.
+  void initialize() {
+    if (_isInitialized) return;
+
+    final endpoint = Endpoint(
+      host: Config.dbHost,
+      port: Config.dbPort,
+      database: Config.dbName,
+      username: Config.dbUser,
+      password: Config.dbPassword,
     );
+
+    _pool = Pool.withEndpoints(
+      [endpoint],
+      settings: const PoolSettings(
+        // Установите максимальное количество одновременных соединений
+        maxConnectionCount: 10,
+      ),
+    );
+    _isInitialized = true;
   }
 
-  late Future<Connection> _connection;
+  /// Предоставляет доступ к пулу соединений.
+  Pool get pool {
+    if (!_isInitialized) {
+      throw StateError('DatabaseSource не инициализирован. Вызовите initialize() при старте приложения.');
+    }
+    return _pool;
+  }
 
-  Future<Connection> get connection async => await _connection;
-
+  /// Закрывает все соединения в пуле.
+  /// Этот метод нужно вызвать при graceful shutdown сервера.
   Future<void> close() async {
-    final conn = await _connection;
-    await conn.close();
+    if (_isInitialized) {
+      await _pool.close();
+      _isInitialized = false;
+    }
   }
 }

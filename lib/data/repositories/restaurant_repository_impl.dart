@@ -1,18 +1,17 @@
 import 'package:back_garson/data/models/restaurant_model.dart';
-import 'package:back_garson/data/sources/database.dart';
 import 'package:back_garson/domain/entities/restaurant.dart';
 import 'package:back_garson/domain/repositories/restaurant_repository.dart';
+import 'package:postgres/postgres.dart';
 
 class RestaurantRepositoryImpl implements RestaurantRepository {
-  final DatabaseSource database;
+  final Pool pool;
 
-  RestaurantRepositoryImpl(this.database);
+  RestaurantRepositoryImpl(this.pool);
 
   @override
   Future<Restaurant> getRestaurantById(String restaurantId) async {
-    final conn = await database.connection;
     try {
-      final result = await conn.execute(
+      final result = await pool.execute(
         r'''
         SELECT id, name, description, self_order_discount
         FROM restaurants
@@ -25,14 +24,16 @@ class RestaurantRepositoryImpl implements RestaurantRepository {
         throw Exception('Restaurant not found');
       }
 
+      final row = result.first;
       return RestaurantModel.fromJson({
-        'id': result[0][0] as String,
-        'name': result[0][1] as String,
-        'description': result[0][2] as String? ?? '',
-        'self_order_discount': result[0][3] as int? ?? 0,
+        'id': row[0] as String,
+        'name': row[1] as String,
+        'description': row[2] as String? ?? '',
+        'self_order_discount': row[3] as int? ?? 0,
       });
-    } finally {
-      await conn.close();
+    } catch (e) {
+      print('Error in getRestaurantById: $e');
+      rethrow;
     }
   }
 }

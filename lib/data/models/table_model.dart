@@ -6,33 +6,67 @@ import 'package:back_garson/domain/entities/table.dart';
 // сущность Table и обратно. Он живёт в слое data, который отвечает
 // за взаимодействие с внешними источниками (база данных, API).
 
-
 class TableModel extends Table {
+  final String? hallId;
+  final bool isOwn;
+  final bool hasNewOrder;
+  final bool hasGuestRequest;
+  final bool hasInProgressOrder;
+  final bool hasInProgressRequest;
+
   TableModel({
     required super.id,
-    required super.status,
-    required super.capacity,
-    required super.number,
+    this.hallId,
     required super.restaurantId,
+    required super.number,
+    required super.status,
+    this.isOwn = false,
+    this.hasNewOrder = false,
+    this.hasGuestRequest = false,
+    this.hasInProgressOrder = false,
+    this.hasInProgressRequest = false,
+    required super.capacity,
   });
 
   factory TableModel.fromJson(Map<String, dynamic> json) {
     return TableModel(
-      id: json['id'] as String,
-      status: json['status'] as String,
-      capacity: json['capacity'] as int,
+      id: json['id'] as String? ?? json['tableId'] as String,
+      hallId: json['hallId'] as String?,
+      restaurantId: json['restaurantId'] as String,
       number: json['number'] as int,
-      restaurantId: json['restaurantId'] as String, // Изменяем ключ
+      status: json['status'] as String? ?? 'unknown',
+      isOwn: json['isOwn'] as bool? ?? false,
+      hasNewOrder: json['hasNewOrder'] as bool? ?? false,
+      hasGuestRequest: json['hasGuestRequest'] as bool? ?? false,
+      hasInProgressOrder: json['hasInProgressOrder'] as bool? ?? false,
+      hasInProgressRequest: json['hasInProgressRequest'] as bool? ?? false,
+      capacity: json['capacity'] as int,
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'status': status,
-      'capacity': capacity,
+      'hallId': hallId,
+      'restaurantId': restaurantId,
       'number': number,
-      'restaurantId': restaurantId, // Меняем ключ на restaurantName
+      'status': status,
+      'isOwn': isOwn,
+      'hasNewOrder': hasNewOrder,
+      'hasGuestRequest': hasGuestRequest,
+      'hasInProgressOrder': hasInProgressOrder,
+      'hasInProgressRequest': hasInProgressRequest,
+      'capacity': capacity,
     };
   }
+
+  //   return {
+  //     'id': id,
+  //     'restaurantId': restaurantId,
+  //     'number': number,
+  //     'status': status,
+  //     'capacity': capacity,
+  //   };
+  // }
 }

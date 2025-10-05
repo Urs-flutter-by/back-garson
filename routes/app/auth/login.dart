@@ -1,14 +1,16 @@
-// routes/app/auth/login.dart
 import 'package:back_garson/application/services/waiter_service.dart';
 import 'package:back_garson/data/models/waiter_model.dart';
+import 'package:back_garson/data/repositories/waiter_repository_impl.dart';
 import 'package:dart_frog/dart_frog.dart';
+import 'package:postgres/postgres.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: 405);
   }
 
-  final service = context.read<WaiterService>();
+  final pool = context.read<Pool>();
+  final service = WaiterService(WaiterRepositoryImpl(pool));
   final body = await context.request.json();
 
   try {

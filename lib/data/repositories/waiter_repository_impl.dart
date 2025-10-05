@@ -1,26 +1,26 @@
-// lib/data/repositories/waiter_repository_impl.dart
+import 'dart:convert';
+
 import 'package:back_garson/data/models/waiter_model.dart';
-import 'package:back_garson/data/sources/database.dart';
 import 'package:back_garson/domain/entities/waiter.dart';
 import 'package:back_garson/domain/repositories/waiter_repository.dart';
 import 'package:crypto/crypto.dart';
-import 'dart:convert';
+import 'package:postgres/postgres.dart';
 
 class WaiterRepositoryImpl implements WaiterRepository {
-  final DatabaseSource database;
+  final Pool pool;
 
-  WaiterRepositoryImpl(this.database);
+  WaiterRepositoryImpl(this.pool);
 
   @override
-  Future<Waiter> signIn(String username, String password, String restaurantId) async {
-    final conn = await database.connection;
+  Future<Waiter> signIn(
+      String username, String password, String restaurantId) async {
     try {
-      final result = await conn.execute(
+      final result = await pool.execute(
         r'''
-      SELECT id, username, restaurant_id
-      FROM waiters
-      WHERE username = $1 AND password_hash = $2 AND restaurant_id = $3
-      ''',
+        SELECT id, username, restaurant_id
+        FROM waiters
+        WHERE username = $1 AND password_hash = $2 AND restaurant_id = $3
+        ''',
         parameters: [
           username,
           _hashPassword(password),
@@ -32,13 +32,15 @@ class WaiterRepositoryImpl implements WaiterRepository {
         throw Exception('Invalid credentials or restaurant ID');
       }
 
+      final row = result.first;
       return WaiterModel.fromJson({
-        'id': result[0][0] as String,
-        'username': result[0][1] as String,
-        'restaurantId': result[0][2] as String,
+        'id': row[0] as String,
+        'username': row[1] as String,
+        'restaurantId': row[2] as String,
       });
-    } finally {
-      await conn.close();
+    } catch (e) {
+      print('Error in signIn: $e');
+      rethrow;
     }
   }
 

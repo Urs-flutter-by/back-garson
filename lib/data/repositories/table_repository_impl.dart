@@ -1,22 +1,17 @@
 import 'package:back_garson/data/models/table_model.dart';
-import 'package:back_garson/data/sources/database.dart';
 import 'package:back_garson/domain/entities/table.dart';
 import 'package:back_garson/domain/repositories/table_repository.dart';
-
-//Реализует интерфейс TableRepository, используя DatabaseSource
-// для выполнения SQL-запросов к PostgreSQL. Здесь выполняется запрос
-// к таблице tables и преобразование результата в TableModel
+import 'package:postgres/postgres.dart';
 
 class TableRepositoryImpl implements TableRepository {
-  final DatabaseSource database;
+  final Pool pool;
 
-  TableRepositoryImpl(this.database);
+  TableRepositoryImpl(this.pool);
 
   @override
   Future<Table> getTableById(String id) async {
-    final conn = await database.connection;
     try {
-      final result = await conn.execute(
+      final result = await pool.execute(
         r'''
         SELECT t.id, t.status, t.capacity, t.number, r.id as restaurantId
         FROM tables t
@@ -30,15 +25,17 @@ class TableRepositoryImpl implements TableRepository {
         throw Exception('Table not found');
       }
 
+      final row = result.first;
       return TableModel.fromJson({
-        'id': result[0][0]! as String,
-        'status': result[0][1]! as String,
-        'capacity': result[0][2]! as int,
-        'number': result[0][3]! as int,
-        'restaurantId': result[0][4]! as String,
+        'id': row[0]! as String,
+        'status': row[1]! as String,
+        'capacity': row[2]! as int,
+        'number': row[3]! as int,
+        'restaurantId': row[4]! as String,
       });
-    } finally {
-      await conn.close();
+    } catch (e) {
+      print('Error in getTableById: $e');
+      rethrow;
     }
   }
 }

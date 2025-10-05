@@ -1,7 +1,10 @@
 import 'dart:io';
+
 import 'package:back_garson/application/services/waiter_request_service.dart';
 import 'package:back_garson/data/models/waiter_request_model.dart';
+import 'package:back_garson/data/repositories/waiter_request_repository_impl.dart';
 import 'package:dart_frog/dart_frog.dart';
+import 'package:postgres/postgres.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
@@ -10,9 +13,10 @@ Future<Response> onRequest(RequestContext context) async {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
 
-  try {
-    // Получаем данные из тела запроса
+  final pool = context.read<Pool>();
+  final service = WaiterRequestService(WaiterRequestRepositoryImpl(pool));
 
+  try {
     final payload = await request.json() as Map<String, dynamic>;
 
     final tableNumber = payload['tableNumber'] as String?;
@@ -34,19 +38,13 @@ Future<Response> onRequest(RequestContext context) async {
       }
     }).toList();
 
-    // Получаем сервис
-
-    final service = context.read<WaiterRequestService>();
-
-    // Записываем запросы в базу
-
     await service.createWaiterRequests(tableNumber, requests);
 
     return Response.json(
       body: {'message': 'Waiter requests created successfully'},
     );
   } catch (e, stackTrace) {
-     print('❌ Ошибка в обработке запроса: $e\n$stackTrace');
+    print('❌ Ошибка в обработке запроса: $e\n$stackTrace');
     return Response.json(
       statusCode: HttpStatus.badRequest,
       body: {'error': 'Failed to create waiter requests: $e'},

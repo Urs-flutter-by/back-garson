@@ -1,14 +1,20 @@
-// routes/app/shift/check.dart
+import 'package:back_garson/application/services/hall_service.dart';
 import 'package:back_garson/application/services/shift_service.dart';
 import 'package:back_garson/data/models/shift_model.dart';
+import 'package:back_garson/data/repositories/hall_repository_impl.dart';
+import 'package:back_garson/data/repositories/shift_repository_impl.dart';
 import 'package:dart_frog/dart_frog.dart';
+import 'package:postgres/postgres.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: 405);
   }
 
-  final service = context.read<ShiftService>();
+  final pool = context.read<Pool>();
+  final hallService = HallService(HallRepositoryImpl(pool));
+  final service = ShiftService(ShiftRepositoryImpl(pool, hallService));
+
   final body = await context.request.json();
 
   try {

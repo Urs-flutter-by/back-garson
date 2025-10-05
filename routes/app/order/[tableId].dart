@@ -9,20 +9,15 @@ Future<Response> onRequest(RequestContext context, String tableId) async {
   }
 
   final pool = context.read<Pool>();
-  final service = OrderService(OrderRepositoryImpl(pool));
+  final orderService = OrderService(OrderRepositoryImpl(pool));
 
   try {
-    final order = await service.createOrder(tableId);
-
-    return Response.json(
-      body: {
-        'orderId': order.orderId,
-      },
-    );
+    final order = await orderService.createOrder(tableId);
+    return Response.json(body: {'orderId': order.orderId, 'success': true});
   } catch (e) {
     return Response.json(
       statusCode: 500,
-      body: {'error': 'Failed to create order: $e'},
+      body: {'error': 'Failed to create order: $e', 'success': false},
     );
   }
 }

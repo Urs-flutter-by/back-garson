@@ -1,69 +1,35 @@
-import 'package:back_garson/application/services/menu_service.dart';
-import 'package:back_garson/application/services/order_service.dart';
-import 'package:back_garson/application/services/restaurant_service.dart';
-import 'package:back_garson/application/services/restaurant_theme_service.dart';
-import 'package:back_garson/application/services/shift_service.dart';
-import 'package:back_garson/application/services/table_service.dart';
-import 'package:back_garson/application/services/waiter_request_service.dart';
-import 'package:back_garson/application/services/waiter_service.dart';
-import 'package:back_garson/data/repositories/menu_repository_impl.dart';
-import 'package:back_garson/data/repositories/order_repository_impl.dart';
-import 'package:back_garson/data/repositories/restaurant_repository_impl.dart';
-import 'package:back_garson/data/repositories/restaurant_theme_repository_impl.dart';
-import 'package:back_garson/data/repositories/shift_repository_impl.dart';
-import 'package:back_garson/data/repositories/table_repository_impl.dart';
-import 'package:back_garson/data/repositories/waiter_repository_iml.dart';
-import 'package:back_garson/data/repositories/waiter_request_repository_impl.dart';
 import 'package:back_garson/data/sources/database.dart';
 import 'package:dart_frog/dart_frog.dart';
+import 'package:postgres/postgres.dart';
+
+// Initialize the database source once, globally.
+// The ..initialize() cascade notation calls the initialize method on the new instance.
+final _dbSource = DatabaseSource.instance..initialize();
 
 Handler middleware(Handler handler) {
   return (context) async {
-    final db = DatabaseSource();
-    final tableService = TableService(TableRepositoryImpl(db));
-    final orderService = OrderService(OrderRepositoryImpl(db));
-    final menuService = MenuService(MenuRepositoryImpl(db));
-    final waiterRequestService =
-        WaiterRequestService(WaiterRequestRepositoryImpl(db));
-    final restaurantService = RestaurantService(RestaurantRepositoryImpl(db));
-    final restaurantThemeService =
-        RestaurantThemeService(RestaurantThemeRepositoryImpl(db));
-    final waiterService = WaiterService(WaiterRepositoryImpl(db));
-    final shiftService = ShiftService(ShiftRepositoryImpl(db));
+    // Provide the single global pool instance to the request context.
+    final updatedContext = context.provide<Pool>(() => _dbSource.pool);
 
-    //final
-
-    final corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers':
-          'Origin, Content-Type, Accept, Authorization',
-    };
-
+    // Handle OPTIONS requests for CORS preflight.
     if (context.request.method == HttpMethod.options) {
-      //print('🔍 Middleware: Обработка OPTIONS запроса');
-      return Response(headers: corsHeaders);
+      return Response(headers: _corsHeaders);
     }
 
-    //print('🔍 Middleware: Предоставление зависимостей в контекст');
-    final updatedContext = context
-        //   .provide<DatabaseSource>(() => db) ????
-        .provide<DatabaseSource>(() => db)
-        .provide<TableService>(() => tableService)
-        .provide<OrderService>(() => orderService)
-        .provide<MenuService>(() => menuService)
-        .provide<WaiterRequestService>(() => waiterRequestService)
-        .provide<RestaurantService>(() => restaurantService)
-        .provide<RestaurantThemeService>(() => restaurantThemeService)
-        .provide<WaiterService>(() => waiterService)
-        .provide<ShiftService>(() => shiftService);
-
-    //print('🔍 Middleware: Выполнение handler');
     final response = await handler(updatedContext);
-    // Логируем ответ
-    print('${DateTime.now()}: Response status: ${response.statusCode}');
+
+    // Add CORS headers to the actual response.
     return response.copyWith(
-      headers: {...response.headers, ...corsHeaders},
+      headers: {
+        ...response.headers,
+        ..._corsHeaders,
+      },
     );
   };
 }
+
+const _corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // In production, restrict this to your frontend's domain.
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Origin, Content-Type, Accept, Authorization',
+};
