@@ -16,7 +16,7 @@ class ShiftModel extends Shift {
     super.closedAt,
     required super.isActive,
     required this.halls,
-  });
+  }) : super(halls: halls);
 
   factory ShiftModel.fromJson(Map<String, dynamic> json) {
     return ShiftModel(

@@ -1,5 +1,4 @@
-// lib/domain/entities/shift.dart
-import '../../data/models/hall_model.dart';
+import 'package:back_garson/domain/entities/hall.dart';
 
 class Shift {
   final String id;
@@ -8,7 +7,7 @@ class Shift {
   final DateTime? openedAt;
   final DateTime? closedAt;
   final bool isActive;
-  final List<HallModel>? halls;
+  final List<Hall>? halls;
 
   Shift({
     required this.id,

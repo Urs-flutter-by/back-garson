@@ -1,10 +1,10 @@
-import 'package:back_garson/data/models/table_model.dart';
+import 'package:back_garson/domain/entities/table.dart';
 
 class Hall {
   final String id;
   final String restaurantId;
   final String name;
-  final List<TableModel> tables;
+  final List<Table> tables;
 
   Hall({
     required this.id,

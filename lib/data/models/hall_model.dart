@@ -2,14 +2,16 @@
 import 'package:back_garson/data/models/table_model.dart';
 import 'package:back_garson/domain/entities/hall.dart';
 
-class HallModel extends Hall{
+class HallModel extends Hall {
+  @override
+  final List<TableModel> tables;
 
   HallModel({
     required super.id,
     required super.restaurantId,
     required super.name,
-    required super.tables,
-  });
+    required this.tables,
+  }) : super(tables: tables);
 
   factory HallModel.fromJson(Map<String, dynamic> json) {
     return HallModel(
