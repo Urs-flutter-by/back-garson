@@ -6,7 +6,7 @@ import 'package:back_garson/domain/repositories/menu_repository.dart';
 import 'package:postgres/postgres.dart';
 
 class MenuRepositoryImpl implements MenuRepository {
-  final Pool pool;
+  final Pool<void> pool;
 
   MenuRepositoryImpl(this.pool);
 

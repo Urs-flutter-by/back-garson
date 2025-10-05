@@ -4,7 +4,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:postgres/postgres.dart';
 
 Future<Response> onRequest(RequestContext context, String tableId) async {
-  final pool = context.read<Pool>();
+  final pool = context.read<Pool<void>>();
   final service = TableService(TableRepositoryImpl(pool));
 
   try {

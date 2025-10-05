@@ -1,4 +1,4 @@
-import '../../domain/entities/restaurant.dart';
+import 'package:back_garson/domain/entities/restaurant.dart';
 
 class RestaurantModel extends Restaurant {
   RestaurantModel({

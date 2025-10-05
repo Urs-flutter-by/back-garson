@@ -9,7 +9,7 @@ final _dbSource = DatabaseSource.instance..initialize();
 Handler middleware(Handler handler) {
   return (context) async {
     // Provide the single global pool instance to the request context.
-    final updatedContext = context.provide<Pool>(() => _dbSource.pool);
+    final updatedContext = context.provide<Pool<void>>(() => _dbSource.pool);
 
     // Handle OPTIONS requests for CORS preflight.
     if (context.request.method == HttpMethod.options) {

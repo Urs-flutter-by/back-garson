@@ -11,11 +11,11 @@ Future<Response> onRequest(RequestContext context) async {
     return Response(statusCode: 405);
   }
 
-  final pool = context.read<Pool>();
+  final pool = context.read<Pool<void>>();
   final hallService = HallService(HallRepositoryImpl(pool));
   final service = ShiftService(ShiftRepositoryImpl(pool, hallService));
 
-  final body = await context.request.json();
+  final body = await context.request.json() as Map<String, dynamic>;
 
   try {
     final waiterId = body['waiterId'] as String?;

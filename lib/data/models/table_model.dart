@@ -44,7 +44,6 @@ class TableModel extends Table {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     return {
       'id': id,

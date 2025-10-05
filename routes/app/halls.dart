@@ -8,9 +8,9 @@ Future<Response> onRequest(RequestContext context) async {
     return Response(statusCode: 405);
   }
 
-  final pool = context.read<Pool>();
+  final pool = context.read<Pool<void>>();
   final service = HallService(HallRepositoryImpl(pool));
-  final body = await context.request.json();
+  final body = await context.request.json() as Map<String, dynamic>;
 
   try {
     final restaurantId = body['restaurantId'] as String?;

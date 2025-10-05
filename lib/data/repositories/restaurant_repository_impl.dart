@@ -4,7 +4,7 @@ import 'package:back_garson/domain/repositories/restaurant_repository.dart';
 import 'package:postgres/postgres.dart';
 
 class RestaurantRepositoryImpl implements RestaurantRepository {
-  final Pool pool;
+  final Pool<void> pool;
 
   RestaurantRepositoryImpl(this.pool);
 

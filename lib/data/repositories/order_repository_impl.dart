@@ -8,7 +8,7 @@ import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
 class OrderRepositoryImpl implements OrderRepository {
-  final Pool pool;
+  final Pool<void> pool;
 
   OrderRepositoryImpl(this.pool);
 

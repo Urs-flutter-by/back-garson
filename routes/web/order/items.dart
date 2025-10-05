@@ -11,7 +11,7 @@ Future<Response> onRequest(RequestContext context) async {
     return Response(statusCode: 405, body: 'Method Not Allowed');
   }
 
-  final pool = context.read<Pool>();
+  final pool = context.read<Pool<void>>();
   final orderService = OrderService(OrderRepositoryImpl(pool));
 
   try {
@@ -38,11 +38,12 @@ Future<Response> onRequest(RequestContext context) async {
     }
 
     final items = itemsJson.map((itemJson) {
-      final dishId = itemJson['dishId'] as String?;
-      final quantityRaw = itemJson['quantity'];
-      final comment = itemJson['comment'] as String?;
-      final courseRaw = itemJson['course'];
-      final serveAt = itemJson['serveAt'] as String?;
+      final itemData = itemJson as Map<String, dynamic>;
+      final dishId = itemData['dishId'] as String?;
+      final quantityRaw = itemData['quantity'];
+      final comment = itemData['comment'] as String?;
+      final courseRaw = itemData['course'];
+      final serveAt = itemData['serveAt'] as String?;
 
       if (dishId == null) {
         throw Exception('dishId is required');

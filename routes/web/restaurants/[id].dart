@@ -5,7 +5,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:postgres/postgres.dart';
 
 Future<Response> onRequest(RequestContext context, String id) async {
-  final pool = context.read<Pool>();
+  final pool = context.read<Pool<void>>();
   final service = RestaurantService(RestaurantRepositoryImpl(pool));
 
   try {

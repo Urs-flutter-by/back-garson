@@ -4,7 +4,7 @@ import 'package:back_garson/domain/repositories/shift_repository.dart';
 import 'package:postgres/postgres.dart';
 
 class ShiftRepositoryImpl implements ShiftRepository {
-  final Pool pool;
+  final Pool<void> pool;
   final HallService hallService;
 
   ShiftRepositoryImpl(this.pool, this.hallService);

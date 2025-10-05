@@ -5,7 +5,7 @@ import 'package:back_garson/domain/repositories/hall_repository.dart';
 import 'package:postgres/postgres.dart';
 
 class HallRepositoryImpl implements HallRepository {
-  final Pool pool;
+  final Pool<void> pool;
 
   HallRepositoryImpl(this.pool);
 

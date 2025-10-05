@@ -4,7 +4,7 @@ import 'package:back_garson/domain/repositories/table_repository.dart';
 import 'package:postgres/postgres.dart';
 
 class TableRepositoryImpl implements TableRepository {
-  final Pool pool;
+  final Pool<void> pool;
 
   TableRepositoryImpl(this.pool);
 

@@ -1,4 +1,4 @@
-import '../../domain/entities/restaurant_themes.dart';
+import 'package:back_garson/domain/entities/restaurant_themes.dart';
 
 class RestaurantThemeModel extends RestaurantTheme {
   RestaurantThemeModel({

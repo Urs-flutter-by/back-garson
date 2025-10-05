@@ -4,7 +4,7 @@ import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
 class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
-  final Pool pool;
+  final Pool<void> pool;
 
   WaiterRequestRepositoryImpl(this.pool);
 

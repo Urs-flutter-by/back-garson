@@ -10,7 +10,7 @@ class DatabaseSource {
   // Статический экземпляр класса (Singleton)
   static final DatabaseSource instance = DatabaseSource._();
 
-  late final Pool _pool;
+  late final Pool<void> _pool;
   bool _isInitialized = false;
 
   /// Инициализирует пул соединений.
@@ -37,7 +37,7 @@ class DatabaseSource {
   }
 
   /// Предоставляет доступ к пулу соединений.
-  Pool get pool {
+  Pool<void> get pool {
     if (!_isInitialized) {
       throw StateError('DatabaseSource не инициализирован. Вызовите initialize() при старте приложения.');
     }

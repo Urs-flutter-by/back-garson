@@ -13,7 +13,7 @@ Future<Response> onRequest(RequestContext context) async {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
 
-  final pool = context.read<Pool>();
+  final pool = context.read<Pool<void>>();
   final service = WaiterRequestService(WaiterRequestRepositoryImpl(pool));
 
   try {

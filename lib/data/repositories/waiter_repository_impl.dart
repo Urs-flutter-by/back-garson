@@ -7,7 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:postgres/postgres.dart';
 
 class WaiterRepositoryImpl implements WaiterRepository {
-  final Pool pool;
+  final Pool<void> pool;
 
   WaiterRepositoryImpl(this.pool);
 
