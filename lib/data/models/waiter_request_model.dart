@@ -1,6 +1,10 @@
 import 'package:back_garson/domain/entities/waiter_request.dart';
 
+/// Модель запроса официанта, представляющая данные из слоя данных.
+///
+/// Расширяет [WaiterRequest] из доменного слоя.
 class WaiterRequestModel extends WaiterRequest {
+  /// Создает экземпляр [WaiterRequestModel].
   WaiterRequestModel({
     required super.requestId,
     required super.message,
@@ -10,17 +14,23 @@ class WaiterRequestModel extends WaiterRequest {
     super.completedAt,
   });
 
+  /// Создает [WaiterRequestModel] из JSON-объекта.
   factory WaiterRequestModel.fromJson(Map<String, dynamic> json) {
     return WaiterRequestModel(
       requestId: json['requestId'] as String,
       message: json['message'] as String,
       timestamp: DateTime.parse(json['timestamp'] as String),
       status: json['status'] as String? ?? 'new',
-      confirmedAt: json['confirmedAt'] != null ? DateTime.parse(json['confirmedAt'] as String) : null,
-      completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt'] as String) : null,
+      confirmedAt: json['confirmedAt'] != null
+          ? DateTime.parse(json['confirmedAt'] as String)
+          : null,
+      completedAt: json['completedAt'] != null
+          ? DateTime.parse(json['completedAt'] as String)
+          : null,
     );
   }
 
+  /// Преобразует [WaiterRequestModel] в JSON-объект.
   Map<String, dynamic> toJson() {
     return {
       'requestId': requestId,

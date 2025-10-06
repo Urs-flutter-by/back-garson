@@ -1,12 +1,9 @@
 class Dish {
-  final String id;
-  final String name;
-  final String description;
-  final double price;
-  final String weight;
-  final List<String> imageUrls;
-  final bool isAvailable;
-
+  /// Сущность блюда.
+  ///
+  /// Представляет собой блюдо с его идентификатором, названием,
+/// описанием, ценой,
+  /// весом, списком URL изображений и статусом доступности.
   Dish({
     required this.id,
     required this.name,
@@ -16,4 +13,25 @@ class Dish {
     required this.imageUrls,
     required this.isAvailable,
   });
+
+  /// Уникальный идентификатор блюда.
+  final String id;
+
+  /// Название блюда.
+  final String name;
+
+  /// Описание блюда.
+  final String description;
+
+  /// Цена блюда.
+  final double price;
+
+  /// Вес или объем блюда.
+  final String weight;
+
+  /// Список URL изображений блюда.
+  final List<String> imageUrls;
+
+  /// Статус доступности блюда (true, если доступно для заказа).
+  final bool isAvailable;
 }

@@ -3,12 +3,24 @@ import 'package:back_garson/domain/repositories/waiter_request_repository.dart';
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
+/// Реализация репозитория для работы с запросами официантов.
+///
+/// Реализует интерфейс [WaiterRequestRepository] из `lib/domain/repositories/waiter_request_repository.dart`.
 class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
-  final Pool<void> pool;
-
+  /// Создает экземпляр [WaiterRequestRepositoryImpl].
+  ///
+  /// Требует пул соединений [pool].
   WaiterRequestRepositoryImpl(this.pool);
 
+  /// Пул соединений с базой данных.
+  final Pool<void> pool;
+
   @override
+
+  /// Создает новые запросы официантов для указанного стола.
+  ///
+  /// Принимает [tableId] стола и список [requests] запросов официантов.
+  /// В случае ошибки выбрасывает исключение.
   Future<void> createWaiterRequests(
     String tableId,
     List<WaiterRequest> requests,
@@ -64,7 +76,7 @@ class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
         }
       });
     } catch (e) {
-      print('Error in createWaiterRequests: $e');
+      // print('Error in createWaiterRequests: $e');
       throw Exception('Failed to create waiter requests: $e');
     }
   }

@@ -2,17 +2,19 @@
 import 'package:back_garson/data/models/table_model.dart';
 import 'package:back_garson/domain/entities/hall.dart';
 
+/// Модель зала ресторана, представляющая данные из слоя данных.
+///
+/// Расширяет [Hall] из доменного слоя.
 class HallModel extends Hall {
-  @override
-  final List<TableModel> tables;
-
+  /// Создает экземпляр [HallModel].
   HallModel({
     required super.id,
     required super.restaurantId,
     required super.name,
-    required this.tables,
+    required List<TableModel> tables,
   }) : super(tables: tables);
 
+  /// Создает [HallModel] из JSON-объекта.
   factory HallModel.fromJson(Map<String, dynamic> json) {
     return HallModel(
       id: json['id'] as String,
@@ -24,12 +26,13 @@ class HallModel extends Hall {
     );
   }
 
+  /// Преобразует [HallModel] в JSON-объект.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'restaurantId': restaurantId,
       'name': name,
-      'tables': tables.map((t) => t.toJson()).toList(),
+      'tables': (tables as List<TableModel>).map((t) => t.toJson()).toList(),
     };
   }
 }

@@ -3,12 +3,23 @@ import 'package:back_garson/domain/entities/table.dart';
 import 'package:back_garson/domain/repositories/table_repository.dart';
 import 'package:postgres/postgres.dart';
 
+/// Реализация репозитория для работы со столами.
+///
+/// Реализует интерфейс [TableRepository] из `lib/domain/repositories/table_repository.dart`.
 class TableRepositoryImpl implements TableRepository {
-  final Pool<void> pool;
-
+  /// Создает экземпляр [TableRepositoryImpl].
+  ///
+  /// Требует пул соединений [pool].
   TableRepositoryImpl(this.pool);
 
+  /// Пул соединений с базой данных.
+  final Pool<void> pool;
+
   @override
+
+  /// Получает информацию о столе по его [id].
+  ///
+  /// В случае ошибки или если стол не найден, выбрасывает исключение.
   Future<Table> getTableById(String id) async {
     try {
       final result = await pool.execute(
@@ -34,7 +45,7 @@ class TableRepositoryImpl implements TableRepository {
         'restaurantId': row[4]! as String,
       });
     } catch (e) {
-      print('Error in getTableById: $e');
+      // print('Error in getTableById: $e');
       rethrow;
     }
   }

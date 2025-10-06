@@ -9,13 +9,15 @@ Future<Response> onRequest(RequestContext context, String tableId) async {
 
   try {
     final table = await service.getTableById(tableId);
-    return Response.json(body: {
-      'id': table.id,
-      'status': table.status,
-      'capacity': table.capacity,
-      'number': table.number,
-      'restaurantId': table.restaurantId,
-    });
+    return Response.json(
+      body: {
+        'id': table.id,
+        'status': table.status,
+        'capacity': table.capacity,
+        'number': table.number,
+        'restaurantId': table.restaurantId,
+      },
+    );
   } catch (e) {
     return Response.json(
       statusCode: 404,

@@ -1,10 +1,9 @@
+/// Сущность темы ресторана.
+///
+/// Представляет собой набор настроек темы для ресторана,
+/// включая цвета, шрифты и изображения.
 class RestaurantTheme {
-  final String id;
-  final String restaurantId;
-  final Map<String, String> themeColors;
-  final Map<String, String> fonts;
-  final Map<String, String> images;
-
+  /// Создает экземпляр [RestaurantTheme].
   RestaurantTheme({
     required this.id,
     required this.restaurantId,
@@ -12,4 +11,19 @@ class RestaurantTheme {
     this.fonts = const {},
     this.images = const {},
   });
+
+  /// Уникальный идентификатор темы.
+  final String id;
+
+  /// Идентификатор ресторана, к которому относится тема.
+  final String restaurantId;
+
+  /// Карта цветов темы (например, {'primary': '#FF0000'}).
+  final Map<String, String> themeColors;
+
+  /// Карта шрифтов темы (например, {'body': 'Roboto'}).
+  final Map<String, String> fonts;
+
+  /// Карта URL изображений темы (например, {'logo': 'http://example.com/logo.png'}).
+  final Map<String, String> images;
 }

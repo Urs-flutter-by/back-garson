@@ -1,8 +1,10 @@
 import 'package:back_garson/domain/entities/dish.dart';
 
+/// Модель блюда, представляющая данные из слоя данных.
 ///
+/// Расширяет [Dish] из доменного слоя.
 class DishModel extends Dish {
-  ///
+  /// Создает экземпляр [DishModel].
   DishModel({
     required super.id,
     required super.name,
@@ -13,6 +15,7 @@ class DishModel extends Dish {
     required super.isAvailable,
   });
 
+  /// Создает [DishModel] из JSON-объекта.
   factory DishModel.fromJson(Map<String, dynamic> json) {
     return DishModel(
       id: (json['id'] as int).toString(),
@@ -25,6 +28,7 @@ class DishModel extends Dish {
     );
   }
 
+  /// Преобразует [DishModel] в JSON-объект.
   Map<String, dynamic> toJson() {
     final json = {
       'id': id,

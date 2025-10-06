@@ -3,12 +3,23 @@ import 'package:back_garson/domain/entities/restaurant_themes.dart';
 import 'package:back_garson/domain/repositories/restaurant_theme_repository.dart';
 import 'package:postgres/postgres.dart';
 
+/// Реализация репозитория для работы с темами ресторанов.
+///
+/// Реализует интерфейс [RestaurantThemeRepository] из `lib/domain/repositories/restaurant_theme_repository.dart`.
 class RestaurantThemeRepositoryImpl implements RestaurantThemeRepository {
-  final Pool<void> pool;
-
+  /// Создает экземпляр [RestaurantThemeRepositoryImpl].
+  ///
+  /// Требует пул соединений [pool].
   RestaurantThemeRepositoryImpl(this.pool);
 
+  /// Пул соединений с базой данных.
+  final Pool<void> pool;
+
   @override
+
+  /// Получает тему оформления для указанного ресторана [restaurantId].
+  ///
+  /// В случае ошибки или если тема не найдена, выбрасывает исключение.
   Future<RestaurantTheme> getRestaurantThemeById(String restaurantId) async {
     try {
       final result = await pool.execute(
@@ -33,7 +44,7 @@ class RestaurantThemeRepositoryImpl implements RestaurantThemeRepository {
         'images': row[4] ?? {},
       });
     } catch (e) {
-      print('Error in getRestaurantThemeById: $e');
+      // print('Error in getRestaurantThemeById: $e');
       rethrow;
     }
   }

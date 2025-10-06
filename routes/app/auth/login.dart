@@ -27,9 +27,11 @@ Future<Response> onRequest(RequestContext context) async {
 
     final waiter = await service.signIn(username, password, restaurantId);
     final waiterModel = waiter as WaiterModel;
-    return Response.json(body: {
-      'waiter': waiterModel.toJson(),
-    });
+    return Response.json(
+      body: {
+        'waiter': waiterModel.toJson(),
+      },
+    );
   } catch (e) {
     return Response.json(
       statusCode: 401,

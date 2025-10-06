@@ -25,7 +25,7 @@ Future<Response> onRequest(RequestContext context) async {
         body: {'error': 'Missing required fields'},
       );
     }
-    print('waiterId=$waiterId, restaurantId=$restaurantId');
+    // print('waiterId=$waiterId, restaurantId=$restaurantId');
     final shift = await service.openShift(waiterId, restaurantId);
     final shiftModel = shift as ShiftModel;
     return Response.json(body: shiftModel.toJson());

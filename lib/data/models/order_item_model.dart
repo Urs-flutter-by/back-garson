@@ -1,8 +1,11 @@
 import 'package:back_garson/data/models/dish_model.dart';
 import 'package:back_garson/domain/entities/order_item.dart';
 
-/// реализация модели заказов
+/// Модель элемента заказа, представляющая данные из слоя данных.
+///
+/// Расширяет [OrderItem] из доменного слоя.
 class OrderItemModel extends OrderItem {
+  /// Создает экземпляр [OrderItemModel].
   OrderItemModel({
     required super.dishId,
     required super.quantity,
@@ -16,6 +19,7 @@ class OrderItemModel extends OrderItem {
     super.serveAt,
   });
 
+  /// Создает [OrderItemModel] из JSON-объекта.
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
     return OrderItemModel(
       dishId: json['dishId'] as String,
@@ -41,6 +45,7 @@ class OrderItemModel extends OrderItem {
     );
   }
 
+  /// Преобразует [OrderItemModel] в JSON-объект.
   Map<String, dynamic> toJson() {
     return {
       'dishId': dishId,

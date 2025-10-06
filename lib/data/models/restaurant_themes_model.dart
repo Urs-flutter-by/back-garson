@@ -1,6 +1,10 @@
 import 'package:back_garson/domain/entities/restaurant_themes.dart';
 
+/// Модель темы ресторана, представляющая данные из слоя данных.
+///
+/// Расширяет [RestaurantTheme] из доменного слоя.
 class RestaurantThemeModel extends RestaurantTheme {
+  /// Создает экземпляр [RestaurantThemeModel].
   RestaurantThemeModel({
     required super.id,
     required super.restaurantId,
@@ -9,6 +13,7 @@ class RestaurantThemeModel extends RestaurantTheme {
     super.images = const {},
   });
 
+  /// Создает [RestaurantThemeModel] из JSON-объекта.
   factory RestaurantThemeModel.fromJson(Map<String, dynamic> json) {
     return RestaurantThemeModel(
       id: json['id'].toString(),
@@ -25,6 +30,7 @@ class RestaurantThemeModel extends RestaurantTheme {
     );
   }
 
+  /// Преобразует [RestaurantThemeModel] в JSON-объект.
   Map<String, dynamic> toJson() {
     return {
       'id': id,

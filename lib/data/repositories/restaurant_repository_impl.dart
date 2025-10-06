@@ -3,12 +3,23 @@ import 'package:back_garson/domain/entities/restaurant.dart';
 import 'package:back_garson/domain/repositories/restaurant_repository.dart';
 import 'package:postgres/postgres.dart';
 
+/// Реализация репозитория для работы с ресторанами.
+///
+/// Реализует интерфейс [RestaurantRepository] из `lib/domain/repositories/restaurant_repository.dart`.
 class RestaurantRepositoryImpl implements RestaurantRepository {
-  final Pool<void> pool;
-
+  /// Создает экземпляр [RestaurantRepositoryImpl].
+  ///
+  /// Требует пул соединений [pool].
   RestaurantRepositoryImpl(this.pool);
 
+  /// Пул соединений с базой данных.
+  final Pool<void> pool;
+
   @override
+
+  /// Получает информацию о ресторане по его [restaurantId].
+  ///
+  /// В случае ошибки или если ресторан не найден, выбрасывает исключение.
   Future<Restaurant> getRestaurantById(String restaurantId) async {
     try {
       final result = await pool.execute(
@@ -26,13 +37,13 @@ class RestaurantRepositoryImpl implements RestaurantRepository {
 
       final row = result.first;
       return RestaurantModel.fromJson({
-        'id': row[0] as String,
-        'name': row[1] as String,
+        'id': row[0]! as String,
+        'name': row[1]! as String,
         'description': row[2] as String? ?? '',
         'self_order_discount': row[3] as int? ?? 0,
       });
     } catch (e) {
-      print('Error in getRestaurantById: $e');
+      // print('Error in getRestaurantById: $e');
       rethrow;
     }
   }

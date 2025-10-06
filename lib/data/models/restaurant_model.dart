@@ -1,6 +1,10 @@
 import 'package:back_garson/domain/entities/restaurant.dart';
 
+/// Модель ресторана, представляющая данные из слоя данных.
+///
+/// Расширяет [Restaurant] из доменного слоя.
 class RestaurantModel extends Restaurant {
+  /// Создает экземпляр [RestaurantModel].
   RestaurantModel({
     required super.id,
     required super.name,
@@ -8,6 +12,7 @@ class RestaurantModel extends Restaurant {
     required super.selfOrderDiscount,
   });
 
+  /// Создает [RestaurantModel] из JSON-объекта.
   factory RestaurantModel.fromJson(Map<String, dynamic> json) {
     return RestaurantModel(
       id: json['id'].toString(),
@@ -17,6 +22,7 @@ class RestaurantModel extends Restaurant {
     );
   }
 
+  /// Преобразует [RestaurantModel] в JSON-объект.
   Map<String, dynamic> toJson() {
     return {
       'id': id,

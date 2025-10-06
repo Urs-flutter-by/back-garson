@@ -7,12 +7,24 @@ import 'package:back_garson/domain/repositories/order_repository.dart';
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
+/// Реализация репозитория для работы с заказами.
+///
+/// Реализует интерфейс [OrderRepository] из `lib/domain/repositories/order_repository.dart`.
 class OrderRepositoryImpl implements OrderRepository {
-  final Pool<void> pool;
-
+  /// Создает экземпляр [OrderRepositoryImpl].
+  ///
+  /// Требует пул соединений [pool].
   OrderRepositoryImpl(this.pool);
 
+  /// Пул соединений с базой данных.
+  final Pool<void> pool;
+
   @override
+
+  /// Создает новый заказ для стола [tableId].
+  ///
+  /// В случае ошибки или если стол не найден, выбрасывает исключение.
+  /// Возвращает [Future] с созданной сущностью [Order].
   Future<Order> createOrder(String tableId) async {
     try {
       return await pool.runTx((ctx) async {
@@ -49,13 +61,18 @@ class OrderRepositoryImpl implements OrderRepository {
         return OrderModel(orderId: orderId, items: []);
       });
     } catch (e) {
-      // TODO: Use a proper logger
-      print('Error in createOrder: $e');
+      // TODO(GEMINI): Use a proper logger
+      // print('Error in createOrder: $e');
       throw Exception('Failed to create order: $e');
     }
   }
 
   @override
+
+  /// Получает информацию о заказе по его [orderId].
+  ///
+  /// Возвращает [Future] с объектом [Order] или `null`, если заказ не найден.
+  /// В случае ошибки выбрасывает исключение.
   Future<Order?> getOrder(String orderId) async {
     try {
       return await pool.withConnection((connection) async {
@@ -155,13 +172,18 @@ class OrderRepositoryImpl implements OrderRepository {
         );
       });
     } catch (e) {
-      // TODO: Use a proper logger
-      print('Error in getOrder: $e');
+      // TODO(GEMINI): Use a proper logger
+      // print('Error in getOrder: $e');
       throw Exception('Failed to get order: $e');
     }
   }
 
   @override
+
+  /// Добавляет новые позиции в существующий заказ.
+  ///
+  /// Принимает [orderId] заказа и список [items] позиций заказа.
+  /// В случае ошибки выбрасывает исключение.
   Future<void> addOrderItems(String orderId, List<OrderItem> items) async {
     try {
       await pool.runTx((ctx) async {
@@ -193,10 +215,10 @@ class OrderRepositoryImpl implements OrderRepository {
         for (final row in existingItemsResult) {
           final dishId = row[0].toString();
           existingItems[dishId] = {
-            'quantity': row[1] as int,
-            'status': row[2] as String,
+            'quantity': row[1]! as int,
+            'status': row[2]! as String,
             'comment': row[3] as String?,
-            'course': row[4] as int,
+            'course': row[4]! as int,
             'serve_at': row[5] as DateTime?,
           };
         }
@@ -282,8 +304,8 @@ class OrderRepositoryImpl implements OrderRepository {
         }
       });
     } catch (e) {
-      // TODO: Use a proper logger
-      print('Error in addOrderItems: $e');
+      // TODO(GEMINI): Use a proper logger
+      // print('Error in addOrderItems: $e');
       throw Exception('Failed to add order items: $e');
     }
   }

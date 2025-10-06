@@ -10,6 +10,7 @@ class DatabaseSource {
   // Статический экземпляр класса (Singleton)
   static final DatabaseSource instance = DatabaseSource._();
 
+  /// Пул соединений с базой данных.
   late final Pool<void> _pool;
   bool _isInitialized = false;
 
@@ -18,7 +19,8 @@ class DatabaseSource {
   void initialize() {
     if (_isInitialized) return;
 
-    final dbUrl = 'postgres://${Config.dbUser}:${Config.dbPassword}@${Config.dbHost}:${Config.dbPort}/${Config.dbName}?sslmode=disable&max_connection_count=10';
+    const dbUrl =
+        'postgres://${Config.dbUser}:${Config.dbPassword}@${Config.dbHost}:${Config.dbPort}/${Config.dbName}?sslmode=disable&max_connection_count=10';
 
     _pool = Pool.withUrl(dbUrl);
     _isInitialized = true;
@@ -27,7 +29,9 @@ class DatabaseSource {
   /// Предоставляет доступ к пулу соединений.
   Pool<void> get pool {
     if (!_isInitialized) {
-      throw StateError('DatabaseSource не инициализирован. Вызовите initialize() при старте приложения.');
+      throw StateError(
+          'DatabaseSource не инициализирован. Вызовите initialize()'
+          ' при старте приложения.');
     }
     return _pool;
   }

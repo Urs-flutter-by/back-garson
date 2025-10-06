@@ -24,7 +24,7 @@ Future<Response> onRequest(RequestContext context, String orderId) async {
         statusCode: 400,
         body: {
           'error': 'Items list is required and cannot be empty',
-          'success': false
+          'success': false,
         },
       );
     }
@@ -44,14 +44,14 @@ Future<Response> onRequest(RequestContext context, String orderId) async {
       final course = courseRaw is int
           ? courseRaw
           : int.tryParse(courseRaw?.toString() ?? '1') ?? 1;
-      if (course < 1 || course > 10)
+      if (course < 1 || course > 10) {
         throw Exception('Invalid course: must be between 1 and 10');
+      }
 
       return OrderItemModel(
         dishId: dishId,
         quantity: quantity,
         status: 'new',
-        dish: null,
         comment: comment,
         course: course,
       );
@@ -59,7 +59,8 @@ Future<Response> onRequest(RequestContext context, String orderId) async {
 
     await orderService.addOrderItems(orderId, items);
     return Response.json(
-        body: {'success': true, 'message': 'Order items added successfully'});
+      body: {'success': true, 'message': 'Order items added successfully'},
+    );
   } catch (e) {
     return Response.json(
       statusCode: 400,

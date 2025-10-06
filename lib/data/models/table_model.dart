@@ -1,33 +1,28 @@
 import 'package:back_garson/domain/entities/table.dart';
 
-// класс TableModel наследуется от Table и добавляет
-// методы для сериализации/десериализации (например, fromJson, toJson).
-// Этот класс нужен для преобразования данных из базы (или JSON) в
-// сущность Table и обратно. Он живёт в слое data, который отвечает
-// за взаимодействие с внешними источниками (база данных, API).
-
+/// Модель стола, представляющая данные из слоя данных.
+///
+/// Расширяет [Table] из доменного слоя.
+/// Этот класс нужен для преобразования данных из базы (или JSON) в
+/// сущность Table и обратно. Он живёт в слое data, который отвечает
+/// за взаимодействие с внешними источниками (база данных, API).
 class TableModel extends Table {
-  final String? hallId;
-  final bool isOwn;
-  final bool hasNewOrder;
-  final bool hasGuestRequest;
-  final bool hasInProgressOrder;
-  final bool hasInProgressRequest;
-
-  TableModel({
+  /// Создает экземпляр [TableModel].
+  const TableModel({
     required super.id,
-    this.hallId,
     required super.restaurantId,
     required super.number,
     required super.status,
+    required super.capacity,
+    this.hallId,
     this.isOwn = false,
     this.hasNewOrder = false,
     this.hasGuestRequest = false,
     this.hasInProgressOrder = false,
     this.hasInProgressRequest = false,
-    required super.capacity,
   });
 
+  /// Создает [TableModel] из JSON-объекта.
   factory TableModel.fromJson(Map<String, dynamic> json) {
     return TableModel(
       id: json['id'] as String? ?? json['tableId'] as String,
@@ -44,6 +39,25 @@ class TableModel extends Table {
     );
   }
 
+  /// Идентификатор зала, к которому относится стол.
+  final String? hallId;
+
+  /// Флаг, указывающий, является ли стол "своим".
+  final bool isOwn;
+
+  /// Флаг, указывающий, есть ли у стола новый заказ.
+  final bool hasNewOrder;
+
+  /// Флаг, указывающий, есть ли у стола запрос от гостя.
+  final bool hasGuestRequest;
+
+  /// Флаг, указывающий, есть ли у стола заказ в процессе выполнения.
+  final bool hasInProgressOrder;
+
+  /// Флаг, указывающий, есть ли у стола запрос в процессе выполнения.
+  final bool hasInProgressRequest;
+
+  /// Преобразует [TableModel] в JSON-объект.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -59,13 +73,4 @@ class TableModel extends Table {
       'capacity': capacity,
     };
   }
-
-  //   return {
-  //     'id': id,
-  //     'restaurantId': restaurantId,
-  //     'number': number,
-  //     'status': status,
-  //     'capacity': capacity,
-  //   };
-  // }
 }

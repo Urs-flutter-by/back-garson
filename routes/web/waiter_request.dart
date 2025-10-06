@@ -43,8 +43,8 @@ Future<Response> onRequest(RequestContext context) async {
     return Response.json(
       body: {'message': 'Waiter requests created successfully'},
     );
-  } catch (e, stackTrace) {
-    print('❌ Ошибка в обработке запроса: $e\n$stackTrace');
+  } catch (e) {
+    // print('❌ Ошибка в обработке запроса: $e');
     return Response.json(
       statusCode: HttpStatus.badRequest,
       body: {'error': 'Failed to create waiter requests: $e'},

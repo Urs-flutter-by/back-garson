@@ -67,7 +67,6 @@ Future<Response> onRequest(RequestContext context) async {
         dishId: dishId,
         quantity: quantity,
         status: 'new',
-        dish: null,
         comment: comment,
         course: course,
         serveAt: serveAtDate,

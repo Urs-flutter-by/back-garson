@@ -5,12 +5,24 @@ import 'package:back_garson/domain/entities/menu.dart';
 import 'package:back_garson/domain/repositories/menu_repository.dart';
 import 'package:postgres/postgres.dart';
 
+/// Реализация репозитория для работы с меню.
+///
+/// Реализует интерфейс [MenuRepository] из `lib/domain/repositories/menu_repository.dart`.
 class MenuRepositoryImpl implements MenuRepository {
-  final Pool<void> pool;
-
+  /// Создает экземпляр [MenuRepositoryImpl].
+  ///
+  /// Требует пул соединений [pool].
   MenuRepositoryImpl(this.pool);
 
+  /// Пул соединений с базой данных.
+  final Pool<void> pool;
+
   @override
+
+  /// Получает меню для указанного [restaurantId].
+  ///
+  /// Возвращает [Future] с объектом [Menu] из `lib/domain/entities/menu.dart`.
+  /// В случае ошибки выбрасывает исключение.
   Future<Menu> getMenuByRestaurantId(String restaurantId) async {
     try {
       return await pool.withConnection((connection) async {
@@ -31,7 +43,7 @@ class MenuRepositoryImpl implements MenuRepository {
         final categories = <CategoryModel>[];
         for (final row in categoriesResult) {
           final categoryId = row[0].toString();
-          final categoryName = row[1] as String;
+          final categoryName = row[1]! as String;
 
           // Получаем блюда для каждой категории
           final dishesResult = await connection.execute(
@@ -46,8 +58,9 @@ class MenuRepositoryImpl implements MenuRepository {
           final dishes = dishesResult.map((dishRow) {
             // Преобразуем price из строки в double, если это строка
             final priceRaw = dishRow[3];
-            final price =
-                priceRaw is String ? double.parse(priceRaw) : (priceRaw as num).toDouble();
+            final price = priceRaw is String
+                ? double.parse(priceRaw)
+                : (priceRaw! as num).toDouble();
 
             return DishModel(
               id: dishRow[0].toString(),
@@ -60,17 +73,19 @@ class MenuRepositoryImpl implements MenuRepository {
             );
           }).toList();
 
-          categories.add(CategoryModel(
-            id: categoryId,
-            name: categoryName,
-            dishes: dishes,
-          ));
+          categories.add(
+            CategoryModel(
+              id: categoryId,
+              name: categoryName,
+              dishes: dishes,
+            ),
+          );
         }
 
         return MenuModel(categories: categories);
       });
-    } catch (e, stackTrace) {
-      print('MenuRepositoryImpl: ошибка: $e\n$stackTrace');
+    } catch (e) {
+      // print('MenuRepositoryImpl: ошибка: $e');
       rethrow;
     }
   }

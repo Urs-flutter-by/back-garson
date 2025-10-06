@@ -1,12 +1,17 @@
-import 'package:back_garson/domain/entities/order.dart';
 import 'package:back_garson/data/models/order_item_model.dart';
+import 'package:back_garson/domain/entities/order.dart';
 
+/// Модель заказа, представляющая данные из слоя данных.
+///
+/// Расширяет [Order] из доменного слоя.
 class OrderModel extends Order {
+  /// Создает экземпляр [OrderModel].
   OrderModel({
     required super.orderId,
     required super.items,
   });
 
+  /// Создает [OrderModel] из JSON-объекта.
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     return OrderModel(
       orderId: json['orderId'] as String? ?? '',
@@ -16,6 +21,7 @@ class OrderModel extends Order {
     );
   }
 
+  /// Преобразует [OrderModel] в JSON-объект.
   Map<String, dynamic> toJson() {
     return {
       'order_id': orderId,

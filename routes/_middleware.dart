@@ -3,7 +3,8 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:postgres/postgres.dart';
 
 // Initialize the database source once, globally.
-// The ..initialize() cascade notation calls the initialize method on the new instance.
+// The ..initialize() cascade notation calls the initialize
+// method on the new instance.
 final _dbSource = DatabaseSource.instance..initialize();
 
 Handler middleware(Handler handler) {
@@ -29,7 +30,8 @@ Handler middleware(Handler handler) {
 }
 
 const _corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // In production, restrict this to your frontend's domain.
+  'Access-Control-Allow-Origin':
+      '*', // In production, restrict this to your frontend's domain.
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Origin, Content-Type, Accept, Authorization',
 };

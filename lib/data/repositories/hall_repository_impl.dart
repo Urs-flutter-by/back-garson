@@ -4,12 +4,24 @@ import 'package:back_garson/data/models/table_model.dart';
 import 'package:back_garson/domain/repositories/hall_repository.dart';
 import 'package:postgres/postgres.dart';
 
+/// Реализация репозитория для работы с залами.
+///
+/// Реализует интерфейс [HallRepository] из `lib/domain/repositories/hall_repository.dart`
 class HallRepositoryImpl implements HallRepository {
-  final Pool<void> pool;
-
+  /// Создает экземпляр [HallRepositoryImpl].
+  ///
+  /// Требует пул соединений [pool].
   HallRepositoryImpl(this.pool);
 
+  /// Пул соединений с базой данных.
+  final Pool<void> pool;
+
   @override
+
+  /// Получает все залы, связанные с указанным [restaurantId].
+  ///
+  /// Возвращает [Future] со списком [HallModel]
+  /// из `lib/data/models/hall_model.dart`.
   Future<List<HallModel>> getHallsByRestaurantId(String restaurantId) async {
     try {
       return await pool.withConnection((connection) async {
@@ -25,7 +37,7 @@ class HallRepositoryImpl implements HallRepository {
 
         final halls = <HallModel>[];
         for (final row in hallResult) {
-          final hallId = row[0] as String;
+          final hallId = row[0]! as String;
 
           // Получаем столики для каждого зала
           final tableResult = await connection.execute(
@@ -39,32 +51,38 @@ class HallRepositoryImpl implements HallRepository {
             parameters: [hallId],
           );
 
-          final tables = tableResult.map((tableRow) => TableModel(
-            id: tableRow[0] as String,
-            hallId: tableRow[1] as String?,
-            restaurantId: tableRow[2] as String,
-            number: tableRow[3] as int,
-            status: tableRow[4] as String,
-            isOwn: tableRow[5] as bool? ?? false,
-            hasNewOrder: tableRow[6] as bool? ?? false,
-            hasGuestRequest: tableRow[7] as bool? ?? false,
-            hasInProgressOrder: tableRow[8] as bool? ?? false,
-            hasInProgressRequest: tableRow[9] as bool? ?? false,
-            capacity: tableRow[10] as int,
-          )).toList();
+          final tables = tableResult
+              .map(
+                (tableRow) => TableModel(
+                  id: tableRow[0]! as String,
+                  hallId: tableRow[1] as String?,
+                  restaurantId: tableRow[2]! as String,
+                  number: tableRow[3]! as int,
+                  status: tableRow[4]! as String,
+                  isOwn: tableRow[5] as bool? ?? false,
+                  hasNewOrder: tableRow[6] as bool? ?? false,
+                  hasGuestRequest: tableRow[7] as bool? ?? false,
+                  hasInProgressOrder: tableRow[8] as bool? ?? false,
+                  hasInProgressRequest: tableRow[9] as bool? ?? false,
+                  capacity: tableRow[10]! as int,
+                ),
+              )
+              .toList();
 
-          halls.add(HallModel(
-            id: hallId,
-            restaurantId: row[1] as String,
-            name: row[2] as String,
-            tables: tables,
-          ));
+          halls.add(
+            HallModel(
+              id: hallId,
+              restaurantId: row[1]! as String,
+              name: row[2]! as String,
+              tables: tables,
+            ),
+          );
         }
 
         return halls;
       });
-    } catch (e, stackTrace) {
-      print('HallRepositoryImpl: ошибка: $e\n$stackTrace');
+    } catch (e) {
+      // print('HallRepositoryImpl: ошибка: $e');
       rethrow;
     }
   }
