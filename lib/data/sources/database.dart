@@ -18,21 +18,9 @@ class DatabaseSource {
   void initialize() {
     if (_isInitialized) return;
 
-    final endpoint = Endpoint(
-      host: Config.dbHost,
-      port: Config.dbPort,
-      database: Config.dbName,
-      username: Config.dbUser,
-      password: Config.dbPassword,
-    );
+    final dbUrl = 'postgres://${Config.dbUser}:${Config.dbPassword}@${Config.dbHost}:${Config.dbPort}/${Config.dbName}?sslmode=disable&max_connection_count=10';
 
-    _pool = Pool.withEndpoints(
-      [endpoint],
-      settings: const PoolSettings(
-        // Установите максимальное количество одновременных соединений
-        maxConnectionCount: 10,
-      ),
-    );
+    _pool = Pool.withUrl(dbUrl);
     _isInitialized = true;
   }
 
