@@ -3,6 +3,7 @@ import 'package:back_garson/data/models/dish_model.dart';
 import 'package:back_garson/data/models/menu_model.dart';
 import 'package:back_garson/domain/entities/menu.dart';
 import 'package:back_garson/domain/repositories/menu_repository.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
 /// Реализация репозитория для работы с меню.
@@ -16,6 +17,8 @@ class MenuRepositoryImpl implements MenuRepository {
 
   /// Пул соединений с базой данных.
   final Pool<void> pool;
+
+  static final _log = Logger('MenuRepositoryImpl');
 
   @override
 
@@ -84,8 +87,8 @@ class MenuRepositoryImpl implements MenuRepository {
 
         return MenuModel(categories: categories);
       });
-    } catch (e) {
-      // print('MenuRepositoryImpl: ошибка: $e');
+    } catch (e, st) {
+      _log.severe('Error in getMenuByRestaurantId', e, st);
       rethrow;
     }
   }

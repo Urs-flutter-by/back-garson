@@ -1,6 +1,7 @@
 import 'package:back_garson/application/services/hall_service.dart';
 import 'package:back_garson/data/models/shift_model.dart';
 import 'package:back_garson/domain/repositories/shift_repository.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
 /// Реализация репозитория для работы со сменами.
@@ -19,6 +20,8 @@ class ShiftRepositoryImpl implements ShiftRepository {
   /// Сервис для получения информации о залах.
   final HallService hallService;
 
+  static final _log = Logger('ShiftRepositoryImpl');
+
   @override
 
   /// Проверяет наличие активной смены для официанта.
@@ -30,7 +33,7 @@ class ShiftRepositoryImpl implements ShiftRepository {
   Future<ShiftModel> checkShift(String waiterId) async {
     try {
       return await pool.withConnection((conn) async {
-        // print('checkShift: using connection for waiterId: $waiterId');
+        _log.fine('Checking shift for waiterId: $waiterId');
         final result = await conn.execute(
           r'''
           SELECT id, waiter_id, restaurant_id, opened_at, closed_at, is_active
@@ -43,7 +46,7 @@ class ShiftRepositoryImpl implements ShiftRepository {
         );
 
         if (result.isEmpty) {
-          // print('checkShift: смена не найдена');
+          _log.info('No active shift found for waiter $waiterId.');
           return ShiftModel(
             id: '',
             waiterId: waiterId,
@@ -61,7 +64,7 @@ class ShiftRepositoryImpl implements ShiftRepository {
         if (openedAt != null) {
           final hoursSinceOpened = now.difference(openedAt).inHours;
           if (hoursSinceOpened > 10) {
-            // print('checkShift: смена устарела, закрываем (id: ${shift[0]})');
+            _log.info('Shift ${shift[0]} is outdated. Closing it.');
             await conn.execute(
               r'''
               UPDATE shifts
@@ -80,9 +83,8 @@ class ShiftRepositoryImpl implements ShiftRepository {
           }
         }
 
-                      final halls = await hallService
-                          .getHallsByRestaurantId(restaurantId);
-        // print('checkShift: найдена активная смена (id: ${shift[0]})');
+        final halls = await hallService.getHallsByRestaurantId(restaurantId);
+        _log.fine('Active shift found: ${shift[0]}');
         return ShiftModel(
           id: shift[0]! as String,
           waiterId: shift[1]! as String,
@@ -93,8 +95,8 @@ class ShiftRepositoryImpl implements ShiftRepository {
           halls: halls,
         );
       });
-    } catch (e) {
-      // print('checkShift: ошибка: $e');
+    } catch (e, st) {
+      _log.severe('Error in checkShift', e, st);
       rethrow;
     }
   }
@@ -110,10 +112,9 @@ class ShiftRepositoryImpl implements ShiftRepository {
   Future<ShiftModel> openShift(String waiterId, String restaurantId) async {
     try {
       return await pool.withConnection((conn) async {
-        // print(
-        //   'openShift: using connection for waiterId: $waiterId,
-        //   restaurantId: $restaurantId',
-        // );
+        _log.fine(
+          'Opening shift for waiterId: $waiterId, restaurantId: $restaurantId',
+        );
         final result = await conn.execute(
           r'''
           SELECT id, waiter_id, restaurant_id, opened_at, closed_at, is_active
@@ -133,8 +134,9 @@ class ShiftRepositoryImpl implements ShiftRepository {
           if (openedAt != null) {
             final hoursSinceOpened = now.difference(openedAt).inHours;
             if (hoursSinceOpened > 10) {
-              // print('openShift: смена устарела,
-              // закрываем (id: ${shift[0]})');
+              _log.info(
+                'Outdated shift ${shift[0]} found during open. Closing it.',
+              );
               await conn.execute(
                 r'''
                 UPDATE shifts
@@ -144,9 +146,11 @@ class ShiftRepositoryImpl implements ShiftRepository {
                 parameters: [now.toIso8601String(), shift[0]],
               );
             } else {
-              // print('openShift: найдена активная смена (id: ${shift[0]})');
-              final halls = await hallService
-                  .getHallsByRestaurantId(restaurantId);
+              _log.info(
+                'An active shift already exists: ${shift[0]}. Returning it.',
+              );
+              final halls =
+                  await hallService.getHallsByRestaurantId(restaurantId);
               return ShiftModel(
                 id: shift[0]! as String,
                 waiterId: shift[1]! as String,
@@ -160,7 +164,9 @@ class ShiftRepositoryImpl implements ShiftRepository {
           }
         }
 
-        // print('openShift: создаём новую смену');
+        _log.info(
+          'No active shift found. Opening a new one for waiter $waiterId.',
+        );
         final now = DateTime.now();
         final insertResult = await conn.execute(
           r'''
@@ -171,8 +177,8 @@ class ShiftRepositoryImpl implements ShiftRepository {
           parameters: [waiterId, restaurantId, now.toIso8601String()],
         );
 
-        // print('openShift: смена создана (id: ${insertResult[0][0]})');
         final shift = insertResult[0];
+        _log.info('New shift created: ${shift[0]}');
         final halls = await hallService.getHallsByRestaurantId(restaurantId);
         return ShiftModel(
           id: shift[0]! as String,
@@ -183,8 +189,8 @@ class ShiftRepositoryImpl implements ShiftRepository {
           halls: halls,
         );
       });
-    } catch (e) {
-      // print('openShift: ошибка: $e');
+    } catch (e, st) {
+      _log.severe('Error in openShift', e, st);
       rethrow;
     }
   }

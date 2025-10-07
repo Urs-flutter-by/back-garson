@@ -4,6 +4,7 @@ import 'package:back_garson/data/models/order_model.dart';
 import 'package:back_garson/domain/entities/order.dart';
 import 'package:back_garson/domain/entities/order_item.dart';
 import 'package:back_garson/domain/repositories/order_repository.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
@@ -18,6 +19,8 @@ class OrderRepositoryImpl implements OrderRepository {
 
   /// Пул соединений с базой данных.
   final Pool<void> pool;
+
+  static final _log = Logger('OrderRepositoryImpl');
 
   @override
 
@@ -60,9 +63,8 @@ class OrderRepositoryImpl implements OrderRepository {
 
         return OrderModel(orderId: orderId, items: []);
       });
-    } catch (e) {
-      // TODO(GEMINI): Use a proper logger
-      // print('Error in createOrder: $e');
+    } catch (e, st) {
+      _log.severe('Error in createOrder', e, st);
       throw Exception('Failed to create order: $e');
     }
   }
@@ -171,9 +173,8 @@ class OrderRepositoryImpl implements OrderRepository {
           items: items,
         );
       });
-    } catch (e) {
-      // TODO(GEMINI): Use a proper logger
-      // print('Error in getOrder: $e');
+    } catch (e, st) {
+      _log.severe('Error in getOrder', e, st);
       throw Exception('Failed to get order: $e');
     }
   }
@@ -303,9 +304,8 @@ class OrderRepositoryImpl implements OrderRepository {
           }
         }
       });
-    } catch (e) {
-      // TODO(GEMINI): Use a proper logger
-      // print('Error in addOrderItems: $e');
+    } catch (e, st) {
+      _log.severe('Error in addOrderItems', e, st);
       throw Exception('Failed to add order items: $e');
     }
   }

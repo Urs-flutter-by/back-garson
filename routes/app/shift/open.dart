@@ -4,7 +4,10 @@ import 'package:back_garson/data/models/shift_model.dart';
 import 'package:back_garson/data/repositories/hall_repository_impl.dart';
 import 'package:back_garson/data/repositories/shift_repository_impl.dart';
 import 'package:dart_frog/dart_frog.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
+
+final _log = Logger('routes.app.shift.open');
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
@@ -25,11 +28,14 @@ Future<Response> onRequest(RequestContext context) async {
         body: {'error': 'Missing required fields'},
       );
     }
-    // print('waiterId=$waiterId, restaurantId=$restaurantId');
+    _log.fine(
+      'Opening shift for waiterId=$waiterId, restaurantId=$restaurantId',
+    );
     final shift = await service.openShift(waiterId, restaurantId);
     final shiftModel = shift as ShiftModel;
     return Response.json(body: shiftModel.toJson());
-  } catch (e) {
+  } catch (e, st) {
+    _log.severe('Failed to open shift', e, st);
     return Response.json(
       statusCode: 500,
       body: {'error': 'Failed to open shift: $e'},

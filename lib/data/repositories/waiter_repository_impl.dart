@@ -5,6 +5,7 @@ import 'package:back_garson/domain/entities/waiter.dart';
 import 'package:back_garson/domain/repositories/waiter_repository.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dbcrypt/dbcrypt.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
 /// Реализация репозитория для работы с официантами.
@@ -18,6 +19,8 @@ class WaiterRepositoryImpl implements WaiterRepository {
 
   /// Пул соединений с базой данных.
   final Pool<void> pool;
+
+  static final _log = Logger('WaiterRepositoryImpl');
 
   @override
 
@@ -80,8 +83,8 @@ class WaiterRepositoryImpl implements WaiterRepository {
         'username': row[1]! as String,
         'restaurantId': row[3]! as String,
       });
-    } catch (e) {
-      // print('Error in signIn: $e');
+    } catch (e, st) {
+      _log.warning('Error in signIn', e, st);
       rethrow;
     }
   }

@@ -1,6 +1,7 @@
 import 'package:back_garson/data/models/restaurant_themes_model.dart';
 import 'package:back_garson/domain/entities/restaurant_themes.dart';
 import 'package:back_garson/domain/repositories/restaurant_theme_repository.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
 /// Реализация репозитория для работы с темами ресторанов.
@@ -14,6 +15,8 @@ class RestaurantThemeRepositoryImpl implements RestaurantThemeRepository {
 
   /// Пул соединений с базой данных.
   final Pool<void> pool;
+
+  static final _log = Logger('RestaurantThemeRepositoryImpl');
 
   @override
 
@@ -43,8 +46,8 @@ class RestaurantThemeRepositoryImpl implements RestaurantThemeRepository {
         'fonts': row[3] ?? {},
         'images': row[4] ?? {},
       });
-    } catch (e) {
-      // print('Error in getRestaurantThemeById: $e');
+    } catch (e, st) {
+      _log.severe('Error in getRestaurantThemeById', e, st);
       rethrow;
     }
   }

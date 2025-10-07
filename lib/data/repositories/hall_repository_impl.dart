@@ -2,6 +2,7 @@
 import 'package:back_garson/data/models/hall_model.dart';
 import 'package:back_garson/data/models/table_model.dart';
 import 'package:back_garson/domain/repositories/hall_repository.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
 /// Реализация репозитория для работы с залами.
@@ -15,6 +16,8 @@ class HallRepositoryImpl implements HallRepository {
 
   /// Пул соединений с базой данных.
   final Pool<void> pool;
+
+  static final _log = Logger('HallRepositoryImpl');
 
   @override
 
@@ -81,8 +84,8 @@ class HallRepositoryImpl implements HallRepository {
 
         return halls;
       });
-    } catch (e) {
-      // print('HallRepositoryImpl: ошибка: $e');
+    } catch (e, st) {
+      _log.severe('Error in getHallsByRestaurantId', e, st);
       rethrow;
     }
   }

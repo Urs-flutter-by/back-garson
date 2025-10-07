@@ -1,6 +1,7 @@
 import 'package:back_garson/data/models/restaurant_model.dart';
 import 'package:back_garson/domain/entities/restaurant.dart';
 import 'package:back_garson/domain/repositories/restaurant_repository.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
 /// Реализация репозитория для работы с ресторанами.
@@ -14,6 +15,8 @@ class RestaurantRepositoryImpl implements RestaurantRepository {
 
   /// Пул соединений с базой данных.
   final Pool<void> pool;
+
+  static final _log = Logger('RestaurantRepositoryImpl');
 
   @override
 
@@ -42,8 +45,8 @@ class RestaurantRepositoryImpl implements RestaurantRepository {
         'description': row[2] as String? ?? '',
         'self_order_discount': row[3] as int? ?? 0,
       });
-    } catch (e) {
-      // print('Error in getRestaurantById: $e');
+    } catch (e, st) {
+      _log.severe('Error in getRestaurantById', e, st);
       rethrow;
     }
   }

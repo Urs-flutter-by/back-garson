@@ -4,7 +4,10 @@ import 'package:back_garson/application/services/waiter_request_service.dart';
 import 'package:back_garson/data/models/waiter_request_model.dart';
 import 'package:back_garson/data/repositories/waiter_request_repository_impl.dart';
 import 'package:dart_frog/dart_frog.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
+
+final _log = Logger('routes.web.waiter_request');
 
 Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
@@ -43,8 +46,8 @@ Future<Response> onRequest(RequestContext context) async {
     return Response.json(
       body: {'message': 'Waiter requests created successfully'},
     );
-  } catch (e) {
-    // print('❌ Ошибка в обработке запроса: $e');
+  } catch (e, st) {
+    _log.severe('Error in processing waiter request', e, st);
     return Response.json(
       statusCode: HttpStatus.badRequest,
       body: {'error': 'Failed to create waiter requests: $e'},

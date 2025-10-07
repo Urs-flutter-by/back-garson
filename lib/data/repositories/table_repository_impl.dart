@@ -1,6 +1,7 @@
 import 'package:back_garson/data/models/table_model.dart';
 import 'package:back_garson/domain/entities/table.dart';
 import 'package:back_garson/domain/repositories/table_repository.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
 /// Реализация репозитория для работы со столами.
@@ -14,6 +15,8 @@ class TableRepositoryImpl implements TableRepository {
 
   /// Пул соединений с базой данных.
   final Pool<void> pool;
+
+  static final _log = Logger('TableRepositoryImpl');
 
   @override
 
@@ -44,8 +47,8 @@ class TableRepositoryImpl implements TableRepository {
         'number': row[3]! as int,
         'restaurantId': row[4]! as String,
       });
-    } catch (e) {
-      // print('Error in getTableById: $e');
+    } catch (e, st) {
+      _log.severe('Error in getTableById', e, st);
       rethrow;
     }
   }

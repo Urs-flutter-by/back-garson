@@ -1,5 +1,6 @@
 import 'package:back_garson/domain/entities/waiter_request.dart';
 import 'package:back_garson/domain/repositories/waiter_request_repository.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
@@ -14,6 +15,8 @@ class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
 
   /// Пул соединений с базой данных.
   final Pool<void> pool;
+
+  static final _log = Logger('WaiterRequestRepositoryImpl');
 
   @override
 
@@ -75,8 +78,8 @@ class WaiterRequestRepositoryImpl implements WaiterRequestRepository {
           );
         }
       });
-    } catch (e) {
-      // print('Error in createWaiterRequests: $e');
+    } catch (e, st) {
+      _log.severe('Error in createWaiterRequests', e, st);
       throw Exception('Failed to create waiter requests: $e');
     }
   }
