@@ -14,3 +14,9 @@ build/
 
 # Test related files
 coverage/
+
+# IDE files
+.idea/
+
+# Log files
+log/app.log

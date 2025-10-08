@@ -7,9 +7,8 @@ Future<Response> onRequest(RequestContext context, String tableId) async {
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: 405, body: 'Method Not Allowed');
   }
-
-  final pool = context.read<Pool<void>>();
-  final orderService = OrderService(OrderRepositoryImpl(pool));
+  final orderService =
+      OrderService(OrderRepositoryImpl(context.read<Pool<void>>()));
 
   try {
     final order = await orderService.createOrder(tableId);
