@@ -14,4 +14,9 @@ class Config {
 
   /// пароль для подключения к БД
   static const String dbPassword = 'Art123'; // Замени на свой пароль
+
+  /// Секретный ключ для подписи JWT-токенов.
+  /// ВАЖНО: В продакшене замените на длинный, случайный ключ
+  /// и загружайте его из переменных окружения, а не храните в коде.
+  static const String jwtSecret = 'your-super-secret-and-long-jwt-key';
 }
