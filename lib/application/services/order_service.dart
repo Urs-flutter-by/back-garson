@@ -1,6 +1,10 @@
+import 'dart:convert';
+
+import 'package:back_garson/application/services/connection_manager.dart';
 import 'package:back_garson/domain/entities/order.dart';
 import 'package:back_garson/domain/entities/order_item.dart';
 import 'package:back_garson/domain/repositories/order_repository.dart';
+import 'package:logging/logging.dart';
 
 /// Сервис, отвечающий за бизнес-логику, связанную с заказами.
 class OrderService {
@@ -12,6 +16,8 @@ class OrderService {
 
   /// Репозиторий для доступа к данным о заказах.
   final OrderRepository repository;
+
+  final _log = Logger('OrderService');
 
   /// Создает новый заказ для стола [tableId].
   ///
@@ -33,5 +39,33 @@ class OrderService {
   /// из `lib/domain/entities/order_item.dart`.
   Future<void> addOrderItems(String orderId, List<OrderItem> items) async {
     return repository.addOrderItems(orderId, items);
+  }
+
+  /// Обновляет статус заказа и отправляет уведомление через WebSocket.
+  ///
+  /// В реальном приложении этот метод будет также обновлять данные в БД.
+  /// [targetUserId] - ID пользователя, которому нужно отправить уведомление.
+  Future<void> updateOrderStatus(
+    String orderId,
+    String newStatus,
+    String targetUserId,
+  ) async {
+    _log.info(
+      'Имитация: обновление статуса для заказа $orderId на $newStatus...',
+    );
+    // Здесь будет логика вызова репозитория для обновления БД.
+    // await repository.updateOrderStatus(orderId, newStatus);
+
+    // Создаем сообщение для отправки клиенту.
+    final message = jsonEncode({
+      'event': 'order_status_changed',
+      'data': {
+        'orderId': orderId,
+        'newStatus': newStatus,
+      },
+    });
+
+    // Отправляем сообщение через наш менеджер соединений.
+    ConnectionManager.instance.sendMessage(targetUserId, message);
   }
 }
