@@ -1,43 +1,31 @@
 import 'dart:io';
 
 import 'package:back_garson/data/sources/database.dart';
+import 'package:back_garson/presentation/middleware/authentication_middleware.dart';
+import 'package:back_garson/presentation/middleware/subscription_status_middleware.dart';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
-// Initialize the database source once, globally.
-// The ..initialize() cascade notation calls the initialize
-// method on the new instance.
+// Инициализация источника БД (без изменений)
 final _dbSource = DatabaseSource.instance..initialize();
 
-// Flag to ensure logger configuration runs only once.
+// --- Логика логгера (без изменений) ---
 bool _loggerInitialized = false;
 
-/// Configures the root logger to print formatted messages to the console and
-/// write them to a log file.
 void _configureLogger() {
   hierarchicalLoggingEnabled = true;
   Logger.root.level = Level.ALL;
-
-  // Create a file sink to append log messages to a file.
-  // Note: The sink is not explicitly closed. In a server environment, the
-  // application runs continuously, and a graceful shutdown hook to close
-  // resources like this might not be readily available in a simple setup.
-  // The OS will handle closing the file when the process terminates.
   final logFile = File('log/app.log');
-  // Use a synchronous file sink to prevent issues with async operations
-  // in a synchronous listener.
   final fileSink = logFile.openSync(mode: FileMode.append);
 
   Logger.root.onRecord.listen((record) {
     final message =
         '${record.time}: ${record.level.name}: ${record.loggerName}: '
-            '${record.message}';
+        '${record.message}';
 
-    // Print to console.
     // ignore: avoid_print
     print(message);
-    // Write to file synchronously.
     fileSink.writeStringSync('$message\n');
 
     if (record.error != null) {
@@ -55,25 +43,44 @@ void _configureLogger() {
   });
 }
 
+// --- CORS заголовки (без изменений) ---
+const _corsHeaders = {
+  'Access-Control-Allow-Origin':
+      '*', // In production, restrict this to your frontend's domain.
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Origin, Content-Type, Accept, Authorization',
+};
+
+
+// --- ОСНОВНОЙ MIDDLEWARE ---
 Handler middleware(Handler handler) {
+  // Создаем цепочку middleware.
+  // .use() применяет обработчики в обратном порядке (последний .use() -> первый).
+  final chainedHandler = handler
+      .use(subscriptionStatusMiddleware()) // 3. Проверка подписки
+      .use(authenticationMiddleware());   // 2. Проверка токена
+
+  // Возвращаем итоговый обработчик, который включает в себя
+  // существующую логику (логгер, CORS, провайдер БД).
   return (context) async {
-    // Configure logger once when the first request comes in.
+    // 1. Инициализация логгера
     if (!_loggerInitialized) {
       _configureLogger();
       _loggerInitialized = true;
     }
 
-    // Provide the single global pool instance to the request context.
+    // Внедряем пул БД в контекст
     final updatedContext = context.provide<Pool<void>>(() => _dbSource.pool);
 
-    // Handle OPTIONS requests for CORS preflight.
+    // Обработка CORS
     if (context.request.method == HttpMethod.options) {
       return Response(headers: _corsHeaders);
     }
 
-    final response = await handler(updatedContext);
+    // Вызываем нашу новую цепочку, которая включает аутентификацию и проверку подписки
+    final response = await chainedHandler(updatedContext);
 
-    // Add CORS headers to the actual response.
+    // Добавляем CORS заголовки к финальному ответу
     return response.copyWith(
       headers: {
         ...response.headers,
@@ -82,10 +89,3 @@ Handler middleware(Handler handler) {
     );
   };
 }
-
-const _corsHeaders = {
-  'Access-Control-Allow-Origin':
-      '*', // In production, restrict this to your frontend's domain.
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Origin, Content-Type, Accept, Authorization',
-};
