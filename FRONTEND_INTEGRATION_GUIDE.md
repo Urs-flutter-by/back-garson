@@ -74,22 +74,32 @@
 
 ### Как подключиться:
 
-Используйте пакет `web_socket_channel`. При подключении **обязательно** передайте соответствующий JWT-токен (гостевой или сотрудника) в заголовках.
+Для установки WebSocket-соединения необходимо передать JWT-токен. Существует два способа:
 
+**1. Через заголовок `Authorization` (Рекомендуется для мобильных приложений):**
 ```dart
-import 'package:web_socket_channel/web_socket_channel.dart';
-
-// Получаем токен из хранилища
-final token = await storage.read(key: 'jwt_token');
-
-// Устанавливаем соединение
 final channel = WebSocketChannel.connect(
   Uri.parse('ws://<your_domain>/updates'),
   headers: {
     'Authorization': 'Bearer $token',
   },
 );
+```
 
+**2. Через query-параметр `token` (Обязательно для ВЕБ-приложений):**
+Из-за ограничений браузеров, веб-клиент должен передавать токен в URL.
+
+**Пример URL:** `ws://<your_domain>/updates?token=<ВАШ_JWT_ТОКЕН>`
+
+```dart
+final channel = WebSocketChannel.connect(
+  Uri.parse('ws://<your_domain>/updates?token=$token'),
+);
+```
+
+Далее, для прослушивания сообщений, используется стандартный подход:
+
+```dart
 // Начинаем слушать входящие сообщения
 channel.stream.listen((message) {
   print('Получено новое сообщение от сервера: $message');

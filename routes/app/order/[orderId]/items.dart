@@ -31,12 +31,17 @@ Future<Response> onRequest(RequestContext context, String orderId) async {
 
     final items = itemsJson.map((itemJson) {
       final itemData = itemJson as Map<String, dynamic>;
-      final dishId = itemData['dishId'] as String?;
+      final dishIdRaw = itemData['dishId'];
       final quantityRaw = itemData['quantity'];
       final comment = itemData['comment'] as String?;
       final courseRaw = itemData['course'];
 
-      if (dishId == null) throw Exception('dishId is required');
+      if (dishIdRaw == null) throw Exception('dishId is required');
+      
+      final dishId = dishIdRaw is int
+          ? dishIdRaw
+          : int.tryParse(dishIdRaw.toString()) ?? (throw Exception('Invalid dishId'));
+
       final quantity = quantityRaw is int
           ? quantityRaw
           : int.tryParse(quantityRaw.toString()) ??
@@ -49,7 +54,7 @@ Future<Response> onRequest(RequestContext context, String orderId) async {
       }
 
       return OrderItemModel(
-        dishId: dishId,
+        dishId: dishId, // теперь int
         quantity: quantity,
         status: 'new',
         comment: comment,

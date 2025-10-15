@@ -19,8 +19,8 @@ class OrderItem {
     this.serveAt,
   });
 
-  /// Уникальный идентификатор блюда.
-  final String dishId;
+  /// Идентификатор блюда.
+  final int dishId;
 
   /// Количество блюд в заказе.
   final int quantity;

@@ -7,7 +7,7 @@ import 'package:back_garson/domain/entities/order_item.dart';
 class OrderItemModel extends OrderItem {
   /// Создает экземпляр [OrderItemModel].
   OrderItemModel({
-    required super.dishId,
+    required super.dishId, // Теперь это int
     required super.quantity,
     required super.status,
     super.dish,
@@ -22,7 +22,7 @@ class OrderItemModel extends OrderItem {
   /// Создает [OrderItemModel] из JSON-объекта.
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
     return OrderItemModel(
-      dishId: json['dishId'] as String,
+      dishId: json['dishId'] as int, // Читаем как int
       quantity: json['quantity'] as int,
       dish: json['dish'] != null
           ? DishModel.fromJson(json['dish'] as Map<String, dynamic>)
@@ -48,7 +48,7 @@ class OrderItemModel extends OrderItem {
   /// Преобразует [OrderItemModel] в JSON-объект.
   Map<String, dynamic> toJson() {
     return {
-      'dishId': dishId,
+      'dishId': dishId, // Отдаем как int
       'quantity': quantity,
       if (dish != null) 'dish': (dish! as DishModel).toJson(),
       'status': status,

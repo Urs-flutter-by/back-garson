@@ -153,7 +153,7 @@ class OrderRepositoryImpl implements OrderRepository {
 
           items.add(
             OrderItemModel(
-              dishId: dishId.toString(),
+              dishId: dishId,
               quantity: quantity,
               status: status,
               dish: dish,
@@ -190,116 +190,64 @@ class OrderRepositoryImpl implements OrderRepository {
       await pool.runTx((ctx) async {
         // Проверяем существование заказа
         final orderResult = await ctx.execute(
-          r'''
-          SELECT table_id, restaurant_id
-          FROM orders
-          WHERE order_id = $1
-          ''',
+          r'''SELECT 1 FROM orders WHERE order_id = $1''',
           parameters: [orderId],
         );
-
         if (orderResult.isEmpty) {
-          throw Exception('Order not found');
+          throw Exception('Order with id $orderId not found');
         }
 
-        // Получаем все существующие элементы заказа (не только "new")
+        // Получаем все существующие элементы заказа
         final existingItemsResult = await ctx.execute(
-          r'''
-          SELECT dish_id, quantity, status, comment, course, serve_at
-          FROM order_items
-          WHERE order_id = $1
-          ''',
+          r'''SELECT dish_id, quantity, status FROM order_items WHERE order_id = $1''',
           parameters: [orderId],
         );
 
-        final existingItems = <String, Map<String, dynamic>>{};
+        // Теперь ключ - int, как и должно быть
+        final existingItems = <int, Map<String, dynamic>>{};
         for (final row in existingItemsResult) {
-          final dishId = row[0].toString();
-          existingItems[dishId] = {
-            'quantity': row[1]! as int,
-            'status': row[2]! as String,
-            'comment': row[3] as String?,
-            'course': row[4]! as int,
-            'serve_at': row[5] as DateTime?,
+          final map = row.toColumnMap();
+          existingItems[map['dish_id'] as int] = {
+            'quantity': map['quantity'] as int,
+            'status': map['status'] as String,
           };
         }
 
         for (final item in items) {
-          final dishId = int.parse(item.dishId);
-          final quantity = item.quantity;
-          final comment = item.comment;
-          final course = item.course;
-          final serveAt = item.serveAt;
+          // item.dishId теперь int, никаких преобразований не нужно
+          final dishId = item.dishId;
 
           // Проверяем существование блюда
           final dishExists = await ctx.execute(
-            r'''
-            SELECT id FROM dishes WHERE id = $1
-            ''',
+            r'SELECT 1 FROM dishes WHERE id = $1',
             parameters: [dishId],
           );
-
           if (dishExists.isEmpty) {
             throw Exception('Dish with id $dishId not found');
           }
 
-          // Валидация курса
-          if (course < 1 || course > 10) {
-            throw Exception('Course must be between 1 and 10');
-          }
-
-          if (existingItems.containsKey(item.dishId)) {
-            final existing = existingItems[item.dishId]!;
-            final existingStatus = existing['status'] as String;
-
-            if (existingStatus == 'new') {
+          // Проверяем, есть ли уже такая позиция в заказе
+          if (existingItems.containsKey(dishId)) {
+            final existing = existingItems[dishId]!;
+            // Обновляем только если статус 'new' (например, клиент передумал и изменил кол-во)
+            if (existing['status'] == 'new') {
               await ctx.execute(
                 r'''
-                UPDATE order_items
-                SET 
-                  quantity = $1,
-                  comment = $2,
-                  course = $3,
-                  serve_at = $4,
-                  created_at = CURRENT_TIMESTAMP
+                UPDATE order_items SET quantity = $1, comment = $2, course = $3, serve_at = $4
                 WHERE order_id = $5 AND dish_id = $6 AND status = 'new'
                 ''',
-                parameters: [
-                  quantity,
-                  comment,
-                  course,
-                  serveAt,
-                  orderId,
-                  dishId,
-                ],
+                parameters: [item.quantity, item.comment, item.course, item.serveAt, orderId, dishId],
               );
-            } else {
-              continue;
             }
+            // Если статус другой (уже готовится), ничего не делаем
           } else {
+            // Если позиции нет, добавляем новую
             await ctx.execute(
               r'''
-              INSERT INTO order_items (
-                order_id, 
-                dish_id, 
-                quantity, 
-                status, 
-                created_at, 
-                comment, 
-                course, 
-                serve_at
-              )
-              VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, $6, $7)
+              INSERT INTO order_items (order_id, dish_id, quantity, status, comment, course, serve_at)
+              VALUES ($1, $2, $3, 'new', $4, $5, $6)
               ''',
-              parameters: [
-                orderId,
-                dishId,
-                quantity,
-                'new',
-                comment,
-                course,
-                serveAt,
-              ],
+              parameters: [orderId, dishId, item.quantity, item.comment, item.course, item.serveAt],
             );
           }
         }

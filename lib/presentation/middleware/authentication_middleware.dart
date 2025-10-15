@@ -11,20 +11,27 @@ import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 Middleware authenticationMiddleware() {
   return (handler) {
     return (context) {
-      // Получаем заголовок Authorization
+      String? token;
+
+      // Способ 1: Ищем токен в заголовке Authorization (для мобильных клиентов)
       final authHeader =
           context.request.headers[HttpHeaders.authorizationHeader];
-
-      if (authHeader == null || !authHeader.startsWith('Bearer ')) {
-        // Если заголовка нет или он некорректный, возвращаем ошибку 401
-        return Response(
-          statusCode: HttpStatus.unauthorized,
-          body: 'Отсутствует или неверный токен аутентификации',
-        );
+      if (authHeader != null && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
       }
 
-      // Извлекаем сам токен
-      final token = authHeader.substring(7);
+      // Способ 2: Если в заголовке нет, ищем в query-параметрах (для веб-клиентов)
+      if (token == null) {
+        token = context.request.uri.queryParameters['token'];
+      }
+
+      // Если токен не найден ни одним из способов, возвращаем ошибку
+      if (token == null) {
+        return Response(
+          statusCode: HttpStatus.unauthorized,
+          body: 'Токен аутентификации не предоставлен',
+        );
+      }
 
       try {
         // Проверяем токен: подпись и срок действия
