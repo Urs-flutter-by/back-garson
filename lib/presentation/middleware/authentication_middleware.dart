@@ -30,12 +30,26 @@ Middleware authenticationMiddleware() {
         // Проверяем токен: подпись и срок действия
         final jwt = JWT.verify(token, SecretKey(Config.jwtSecret));
         final payload = jwt.payload as Map<String, dynamic>;
+        final role = payload['role'] as String?;
 
-        // Создаем объект с данными пользователя из токена
-        final authPayload = AuthPayload(
-          userId: payload['userId'] as String,
-          role: payload['role'] as String,
-        );
+        if (role == null) {
+          // Используем стандартное исключение
+          throw Exception('В токене отсутствует роль (role)');
+        }
+
+        AuthPayload authPayload;
+        if (role == 'CUSTOMER') {
+          authPayload = AuthPayload(
+            role: role,
+            tableId: payload['tableId'] as String?,
+            restaurantId: payload['restaurantId'] as String?,
+          );
+        } else {
+          authPayload = AuthPayload(
+            role: role,
+            userId: payload['userId'] as String?,
+          );
+        }
 
         // Внедряем информацию о пользователе в контекст запроса,
         // чтобы она была доступна в следующих обработчиках.
@@ -45,7 +59,6 @@ Middleware authenticationMiddleware() {
         return handler(newContext);
       } catch (e) {
         // Этот блок отлавливает ЛЮБУЮ ошибку при проверке токена
-        // (неверная подпись, истекший срок, неверный формат и т.д.)
         return Response(
           statusCode: HttpStatus.unauthorized,
           body: 'Невалидный или истекший токен',

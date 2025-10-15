@@ -13,10 +13,14 @@ Future<Response> onRequest(RequestContext context) async {
   final handler = webSocketHandler((channel, protocol) {
     // Эта функция выполнится только ПОСЛЕ успешной аутентификации.
 
-    // Получаем информацию о пользователе, которую вложил в контекст
-    // наш authenticationMiddleware.
     final payload = context.read<AuthPayload>();
     final userId = payload.userId;
+
+    // Этот эндпоинт только для сотрудников, у которых есть userId.
+    if (userId == null) {
+      channel.sink.close(1008, 'Invalid user type');
+      return;
+    }
 
     // Регистрируем нового клиента в менеджере соединений.
     ConnectionManager.instance.addClient(userId, channel);

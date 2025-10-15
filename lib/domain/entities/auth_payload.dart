@@ -1,20 +1,28 @@
 import 'package:equatable/equatable.dart';
 
 /// Полезная нагрузка, извлеченная из JWT-токена.
-/// Содержит информацию об аутентифицированном пользователе.
+/// Содержит информацию об аутентифицированном пользователе или госте.
 class AuthPayload extends Equatable {
   /// Создает экземпляр [AuthPayload].
   const AuthPayload({
-    required this.userId,
     required this.role,
+    this.userId,
+    this.tableId,
+    this.restaurantId,
   });
 
-  /// Уникальный идентификатор пользователя.
-  final String userId;
-
-  /// Роль пользователя (например, 'WAITER', 'ADMIN_RESTAURANT').
+  /// Роль пользователя (например, 'WAITER', 'CUSTOMER').
   final String role;
 
+  /// Уникальный идентификатор пользователя (для сотрудников).
+  final String? userId;
+
+  /// ID столика (для гостей).
+  final String? tableId;
+
+  /// ID ресторана (для гостей).
+  final String? restaurantId;
+
   @override
-  List<Object?> get props => [userId, role];
+  List<Object?> get props => [role, userId, tableId, restaurantId];
 }

@@ -54,33 +54,26 @@ const _corsHeaders = {
 
 // --- ОСНОВНОЙ MIDDLEWARE ---
 Handler middleware(Handler handler) {
-  // Создаем цепочку middleware.
-  // .use() применяет обработчики в обратном порядке (последний .use() -> первый).
-  final chainedHandler = handler
-      .use(subscriptionStatusMiddleware()) // 3. Проверка подписки
-      .use(authenticationMiddleware());   // 2. Проверка токена
+  // В глобальном middleware оставляем только то, что нужно всем: 
+  // логгер, CORS и провайдер пула БД.
+  final newHandler = handler.use(provider<Pool<void>>((_) => _dbSource.pool));
 
-  // Возвращаем итоговый обработчик, который включает в себя
-  // существующую логику (логгер, CORS, провайдер БД).
   return (context) async {
-    // 1. Инициализация логгера
+    // Конфигурация логгера.
     if (!_loggerInitialized) {
       _configureLogger();
       _loggerInitialized = true;
     }
 
-    // Внедряем пул БД в контекст
-    final updatedContext = context.provide<Pool<void>>(() => _dbSource.pool);
-
-    // Обработка CORS
+    // Обработка CORS.
     if (context.request.method == HttpMethod.options) {
       return Response(headers: _corsHeaders);
     }
 
-    // Вызываем нашу новую цепочку, которая включает аутентификацию и проверку подписки
-    final response = await chainedHandler(updatedContext);
+    // Вызываем следующий обработчик.
+    final response = await newHandler(context);
 
-    // Добавляем CORS заголовки к финальному ответу
+    // Добавляем CORS заголовки к финальному ответу.
     return response.copyWith(
       headers: {
         ...response.headers,
