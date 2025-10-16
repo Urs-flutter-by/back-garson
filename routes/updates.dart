@@ -9,45 +9,45 @@ final _log = Logger('WebSocketRoute');
 
 /// Обрабатывает запросы на установку WebSocket-соединения.
 Future<Response> onRequest(RequestContext context) async {
-  // Создаем основной обработчик для логики WebSocket.
-  final handler = webSocketHandler((channel, protocol) {
-    // Эта функция выполнится только ПОСЛЕ успешной аутентификации.
+  // Создаем финальный обработчик, который будет вызван после всех middleware.
+  final handler = (RequestContext context) {
+    // Этот контекст уже содержит AuthPayload, если токен валидный.
+    return webSocketHandler((channel, protocol) {
+      final payload = context.read<AuthPayload>();
 
-    final payload = context.read<AuthPayload>();
-    final userId = payload.userId;
+      // Определяем уникальный ключ для этой сессии.
+      // Для сотрудника это будет userId, для гостя - sessionId.
+      final connectionKey = payload.userId ?? payload.sessionId;
 
-    // Этот эндпоинт только для сотрудников, у которых есть userId.
-    if (userId == null) {
-      channel.sink.close(1008, 'Invalid user type');
-      return;
-    }
+      // Если в токене нет ни userId, ни sessionId, то это невалидный токен.
+      if (connectionKey == null) {
+        channel.sink.close(4001, 'Invalid token payload');
+        return;
+      }
 
-    // Регистрируем нового клиента в менеджере соединений.
-    ConnectionManager.instance.addClient(userId, channel);
+      // Регистрируем нового клиента в менеджере соединений.
+      ConnectionManager.instance.addClient(connectionKey, channel);
 
-    // Слушаем канал, чтобы узнать, когда клиент отключится.
-    channel.stream.listen(
-      (message) {
-        // Пока просто логируем входящие сообщения. В будущем здесь
-        // можно будет обрабатывать команды от клиента (например, пинг).
-        _log.info('Получено сообщение от $userId: $message');
-      },
-      onDone: () {
-        // Клиент отключился, удаляем его из менеджера.
-        ConnectionManager.instance.removeClient(userId);
-      },
-      onError: (Object error) {
-        // Произошла ошибка, удаляем клиента.
-        _log.warning('Ошибка в канале у $userId: $error');
-        ConnectionManager.instance.removeClient(userId);
-      },
-    );
-  });
+      // Слушаем канал, чтобы узнать, когда клиент отключится.
+      channel.stream.listen(
+        (message) {
+          _log.info('Получено сообщение от $connectionKey: $message');
+        },
+        onDone: () {
+          // Клиент отключился, удаляем его из менеджера.
+          ConnectionManager.instance.removeClient(connectionKey);
+        },
+        onError: (Object error) {
+          // Произошла ошибка, удаляем клиента.
+          _log.warning('Ошибка в канале у $connectionKey: $error');
+          ConnectionManager.instance.removeClient(connectionKey);
+        },
+      );
+    })(context);
+  };
 
-  // "Оборачиваем" наш WebSocket-обработчик в middleware аутентификации.
-  // Это гарантирует, что анонимный пользователь не сможет установить соединение.
-  final protectedHandler = handler.use(authenticationMiddleware());
-
-  // Запускаем всю цепочку.
-  return protectedHandler(context);
+  // Создаем и применяем цепочку middleware к нашему финальному обработчику.
+  return await const Pipeline()
+      .addMiddleware(authenticationMiddleware())
+      .addHandler(handler)(context);
 }

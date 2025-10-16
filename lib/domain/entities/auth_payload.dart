@@ -9,6 +9,7 @@ class AuthPayload extends Equatable {
     this.userId,
     this.tableId,
     this.restaurantId,
+    this.sessionId,
   });
 
   /// Роль пользователя (например, 'WAITER', 'CUSTOMER').
@@ -23,6 +24,9 @@ class AuthPayload extends Equatable {
   /// ID ресторана (для гостей).
   final String? restaurantId;
 
+  /// Уникальный ID сессии (для гостей).
+  final String? sessionId;
+
   @override
-  List<Object?> get props => [role, userId, tableId, restaurantId];
+  List<Object?> get props => [role, userId, tableId, restaurantId, sessionId];
 }

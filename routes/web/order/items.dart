@@ -106,6 +106,7 @@ Future<Response> onRequest(RequestContext context) async {
     }).toList();
 
     // Шаг 4: Добавляем позиции в заказ
+    _log.info('Вызов addOrderItems для заказа $orderId с ${items.length} позициями');
     await orderService.addOrderItems(orderId, items);
 
     return Response.json(body: {'message': 'Позиции успешно добавлены в заказ', 'orderId': orderId});
