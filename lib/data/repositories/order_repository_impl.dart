@@ -186,7 +186,6 @@ class OrderRepositoryImpl implements OrderRepository {
   /// Принимает [orderId] заказа и список [items] позиций заказа.
   /// В случае ошибки выбрасывает исключение.
   Future<void> addOrderItems(String orderId, List<OrderItem> items) async {
-    _log.info('Запущен addOrderItems для заказа $orderId с ${items.length} позициями.');
     try {
       await pool.runTx((ctx) async {
         // Проверяем существование заказа
@@ -217,7 +216,6 @@ class OrderRepositoryImpl implements OrderRepository {
         for (final item in items) {
           // item.dishId теперь int, никаких преобразований не нужно
           final dishId = item.dishId;
-          _log.info('Обработка позиции: dishId $dishId');
 
           // Проверяем существование блюда
           final dishExists = await ctx.execute(
@@ -233,7 +231,6 @@ class OrderRepositoryImpl implements OrderRepository {
             final existing = existingItems[dishId]!;
             // Обновляем только если статус 'new' (например, клиент передумал и изменил кол-во)
             if (existing['status'] == 'new') {
-              _log.info('Обновление существующей позиции: dishId $dishId');
               await ctx.execute(
                 r'''
                 UPDATE order_items SET quantity = $1, comment = $2, course = $3, serve_at = $4
@@ -245,7 +242,6 @@ class OrderRepositoryImpl implements OrderRepository {
             // Если статус другой (уже готовится), ничего не делаем
           } else {
             // Если позиции нет, добавляем новую
-            _log.info('Вставка новой позиции: dishId $dishId');
             await ctx.execute(
               r'''
               INSERT INTO order_items (order_id, dish_id, quantity, status, created_at, comment, course, serve_at)
@@ -255,7 +251,7 @@ class OrderRepositoryImpl implements OrderRepository {
                 orderId,
                 dishId,
                 item.quantity,
-                'new', // status
+                'new',
                 item.comment,
                 item.course,
                 item.serveAt,
