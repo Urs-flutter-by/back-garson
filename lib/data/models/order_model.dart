@@ -9,6 +9,8 @@ class OrderModel extends Order {
   OrderModel({
     required super.orderId,
     required super.items,
+    super.waiterId,
+    super.chefId,
   });
 
   /// Создает [OrderModel] из JSON-объекта.
@@ -18,6 +20,8 @@ class OrderModel extends Order {
       items: (json['items'] as List<dynamic>)
           .map((item) => OrderItemModel.fromJson(item as Map<String, dynamic>))
           .toList(),
+      waiterId: json['waiterId'] as String?,
+      chefId: json['chefId'] as String?,
     );
   }
 

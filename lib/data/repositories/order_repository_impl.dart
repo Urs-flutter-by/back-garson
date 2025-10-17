@@ -265,4 +265,38 @@ class OrderRepositoryImpl implements OrderRepository {
       throw Exception('Failed to add order items: $e');
     }
   }
+
+  @override
+  Future<void> updateOrderStatus({
+    required String orderId,
+    required String newStatus,
+    required String actorId,
+  }) async {
+    try {
+      await pool.runTx((ctx) async {
+        // Шаг 1: Обновляем статус в основной таблице
+        final result = await ctx.execute(
+          r'''UPDATE orders SET status = $1 WHERE order_id = $2''',
+          parameters: [newStatus, orderId],
+        );
+
+        // Проверяем, что строка действительно была обновлена
+        if (result.affectedRows == 0) {
+          throw Exception('Order not found or status already set');
+        }
+
+        // Шаг 2: Вставляем запись в историю
+        await ctx.execute(
+          r'''
+          INSERT INTO order_status_history (order_id, status, changed_by_user_id)
+          VALUES ($1, $2, $3)
+          ''',
+          parameters: [orderId, newStatus, actorId],
+        );
+      });
+    } catch (e, st) {
+      _log.severe('Error in updateOrderStatus', e, st);
+      throw Exception('Failed to update order status: $e');
+    }
+  }
 }

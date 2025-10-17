@@ -97,10 +97,5 @@ SELECT 'WAITER', id FROM permissions WHERE action_key IN (
 ) ON CONFLICT DO NOTHING;
 
 -- Назначаем разрешения для роли "Повар"
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT 'CHEF', id FROM permissions WHERE action_key IN (
-    'order:read',
-    'order:status:prepare',
-    'order:status:ready_for_pickup'
-) ON CONFLICT DO NOTHING;
+
 

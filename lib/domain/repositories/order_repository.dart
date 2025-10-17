@@ -19,4 +19,11 @@ abstract class OrderRepository {
   ///
   /// Принимает [orderId] заказа и список [items] позиций заказа.
   Future<void> addOrderItems(String orderId, List<OrderItem> items);
+
+  /// Обновляет статус заказа.
+  Future<void> updateOrderStatus({
+    required String orderId,
+    required String newStatus,
+    required String actorId,
+  });
 }
