@@ -6,7 +6,7 @@ import 'package:back_garson/domain/entities/order.dart';
 /// Расширяет [Order] из доменного слоя.
 class OrderModel extends Order {
   /// Создает экземпляр [OrderModel].
-  OrderModel({
+  const OrderModel({
     required super.orderId,
     required super.items,
     super.waiterId,

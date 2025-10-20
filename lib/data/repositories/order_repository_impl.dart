@@ -299,4 +299,33 @@ class OrderRepositoryImpl implements OrderRepository {
       throw Exception('Failed to update order status: $e');
     }
   }
+
+  @override
+  Future<Order?> findActiveOrderByTable(String tableId) async {
+    try {
+      // Ищем ID активного заказа для данного столика
+      final result = await pool.withConnection((conn) => conn.execute(
+            r'''
+            SELECT order_id FROM orders 
+            WHERE table_id = $1 AND status NOT IN ('completed', 'canceled')
+            ORDER BY created_at DESC LIMIT 1
+            ''',
+            parameters: [tableId],
+          ));
+
+      if (result.isEmpty) {
+        // Если активного заказа нет, возвращаем null
+        return null;
+      }
+
+      final orderId = result.first.toColumnMap()['order_id'] as String;
+
+      // Если заказ найден, вызываем getOrder, чтобы получить его полностью
+      // со всеми позициями и данными о блюдах.
+      return getOrder(orderId);
+    } catch (e, st) {
+      _log.severe('Error in findActiveOrderByTable', e, st);
+      throw Exception('Failed to find active order: $e');
+    }
+  }
 }

@@ -1,8 +1,10 @@
 import 'dart:io';
 
+import 'package:back_garson/data/models/order_model.dart';
 import 'package:back_garson/data/models/restaurant_model.dart';
 import 'package:back_garson/data/models/restaurant_themes_model.dart';
 import 'package:back_garson/data/models/table_model.dart';
+import 'package:back_garson/data/repositories/order_repository_impl.dart';
 import 'package:back_garson/data/repositories/restaurant_repository_impl.dart';
 import 'package:back_garson/data/repositories/restaurant_theme_repository_impl.dart';
 import 'package:back_garson/data/repositories/table_repository_impl.dart';
@@ -23,20 +25,25 @@ Future<Response> onRequest(RequestContext context, String tableId) async {
   final tableRepo = TableRepositoryImpl(pool);
   final restaurantRepo = RestaurantRepositoryImpl(pool);
   final themeRepo = RestaurantThemeRepositoryImpl(pool);
+  final orderRepo = OrderRepositoryImpl(pool);
 
   try {
     // Шаг 1: Получаем данные о столике.
     final table = await tableRepo.getTableById(tableId);
     final restaurantId = table.restaurantId;
 
-    // Шаг 2: Параллельно запрашиваем данные о ресторане и теме.
-    final futures = [
+    // Шаг 2: Параллельно запрашиваем данные о ресторане, теме и активном заказе.
+    final futures = <Future<dynamic>>[
       restaurantRepo.getRestaurantById(restaurantId),
       themeRepo.getRestaurantThemeById(restaurantId),
+      orderRepo.findActiveOrderByTable(tableId),
     ];
     final results = await Future.wait(futures);
+    
     final restaurant = results[0] as RestaurantModel;
     final theme = results[1] as RestaurantThemeModel;
+    // Результат может быть null, если заказа нет
+    final activeOrder = results[2] as OrderModel?;
 
     // Шаг 3: Генерируем гостевой JWT.
     final jwt = JWT(
@@ -60,6 +67,8 @@ Future<Response> onRequest(RequestContext context, String tableId) async {
         'table': (table as TableModel).toJson(),
         'restaurant': restaurant.toJson(),
         'theme': theme.toJson(),
+        // Если заказа нет, возвращаем пустой объект заказа
+        'order': activeOrder?.toJson() ?? {'orderId': '', 'items': []},
       },
     );
   } catch (e) {

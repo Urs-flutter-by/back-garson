@@ -26,4 +26,7 @@ abstract class OrderRepository {
     required String newStatus,
     required String actorId,
   });
+
+  /// Находит активный (незавершенный) заказ для столика.
+  Future<Order?> findActiveOrderByTable(String tableId);
 }
