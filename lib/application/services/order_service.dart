@@ -34,12 +34,9 @@ class OrderService {
     return repository.getOrder(orderId);
   }
 
-  /// Добавляет позиции [items] в заказ [orderId].
-  ///
-  /// Позиции заказа являются экземплярами [OrderItem]
-  /// из `lib/domain/entities/order_item.dart`.
-  Future<void> addOrderItems(String orderId, List<OrderItem> items) async {
-    return repository.addOrderItems(orderId, items);
+  /// Синхронизирует позиции заказа, вызывая соответствующий метод репозитория.
+  Future<void> syncOrderItems(String orderId, List<OrderItem> items) async {
+    return repository.syncOrderItems(orderId, items);
   }
 
   /// Обновляет статус заказа и отправляет уведомления через WebSocket.

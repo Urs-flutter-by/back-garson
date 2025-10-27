@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:back_garson/application/services/order_service.dart';
 import 'package:back_garson/data/models/order_item_model.dart';
@@ -8,7 +9,7 @@ import 'package:postgres/postgres.dart';
 
 Future<Response> onRequest(RequestContext context, String orderId) async {
   if (context.request.method != HttpMethod.post) {
-    return Response(statusCode: 405, body: 'Method Not Allowed');
+    return Response(statusCode: HttpStatus.methodNotAllowed);
   }
 
   final pool = context.read<Pool<void>>();
@@ -19,57 +20,39 @@ Future<Response> onRequest(RequestContext context, String orderId) async {
     final json = jsonDecode(body) as Map<String, dynamic>;
     final itemsJson = json['items'] as List<dynamic>?;
 
-    if (itemsJson == null || itemsJson.isEmpty) {
-      return Response.json(
-        statusCode: 400,
-        body: {
-          'error': 'Items list is required and cannot be empty',
-          'success': false,
-        },
-      );
+    if (itemsJson == null) {
+      return Response.json(statusCode: 400, body: {'error': 'Поле items обязательно'});
     }
 
     final items = itemsJson.map((itemJson) {
       final itemData = itemJson as Map<String, dynamic>;
-      final dishIdRaw = itemData['dishId'];
-      final quantityRaw = itemData['quantity'];
+      final dishId = itemData['dishId'] as int;
+      final quantity = itemData['quantity'] as int;
       final comment = itemData['comment'] as String?;
-      final courseRaw = itemData['course'];
-
-      if (dishIdRaw == null) throw Exception('dishId is required');
-      
-      final dishId = dishIdRaw is int
-          ? dishIdRaw
-          : int.tryParse(dishIdRaw.toString()) ?? (throw Exception('Invalid dishId'));
-
-      final quantity = quantityRaw is int
-          ? quantityRaw
-          : int.tryParse(quantityRaw.toString()) ??
-              (throw Exception('Invalid quantity: $quantityRaw'));
-      final course = courseRaw is int
-          ? courseRaw
-          : int.tryParse(courseRaw?.toString() ?? '1') ?? 1;
-      if (course < 1 || course > 10) {
-        throw Exception('Invalid course: must be between 1 and 10');
-      }
+      final course = itemData['course'] as int? ?? 1;
+      final serveAt = itemData['serveAt'] != null
+          ? DateTime.tryParse(itemData['serveAt'] as String)
+          : null;
 
       return OrderItemModel(
-        dishId: dishId, // теперь int
+        dishId: dishId,
         quantity: quantity,
         status: 'new',
         comment: comment,
         course: course,
+        serveAt: serveAt,
       );
     }).toList();
 
-    await orderService.addOrderItems(orderId, items);
+    await orderService.syncOrderItems(orderId, items);
+    
     return Response.json(
-      body: {'success': true, 'message': 'Order items added successfully'},
+      body: {'success': true, 'message': 'Order items synced successfully'},
     );
   } catch (e) {
     return Response.json(
-      statusCode: 400,
-      body: {'error': 'Failed to add order items: $e', 'success': false},
+      statusCode: 500,
+      body: {'error': 'Внутренняя ошибка сервера: $e'},
     );
   }
 }

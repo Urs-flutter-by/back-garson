@@ -10,7 +10,7 @@ import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
-final _log = Logger('WebOrderItemsRoute');
+final _log = Logger('WebOrderSyncRoute');
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
@@ -44,7 +44,7 @@ Future<Response> onRequest(RequestContext context) async {
     final activeOrderResult = await pool.withConnection((conn) => conn.execute(
           r'''
           SELECT order_id FROM orders 
-          WHERE table_id = $1 AND status != 'completed' AND status != 'canceled'
+          WHERE table_id = $1 AND status NOT IN ('completed', 'canceled')
           ORDER BY created_at DESC LIMIT 1
           ''',
           parameters: [tableId],
@@ -52,20 +52,19 @@ Future<Response> onRequest(RequestContext context) async {
 
     String orderId;
     if (activeOrderResult.isNotEmpty) {
-      // PostgreSQL возвращает тип UUID как строку
       orderId = activeOrderResult.first.toColumnMap()['order_id'] as String;
     } else {
       final newOrder = await orderService.createOrder(tableId);
       orderId = newOrder.orderId;
     }
 
-    // Шаг 3: Парсим тело запроса, чтобы получить позиции для добавления
+    // Шаг 3: Парсим тело запроса
     final body = await context.request.body();
     final json = jsonDecode(body) as Map<String, dynamic>;
     final itemsJson = json['items'] as List<dynamic>?;
 
-    if (itemsJson == null || itemsJson.isEmpty) {
-      return Response.json(statusCode: 400, body: {'error': 'Список items обязателен'});
+    if (itemsJson == null) {
+      return Response.json(statusCode: 400, body: {'error': 'Поле items обязательно'});
     }
 
     final items = itemsJson.map((itemJson) {
@@ -80,7 +79,6 @@ Future<Response> onRequest(RequestContext context) async {
         throw Exception('dishId is required for each item');
       }
       
-      // Парсим dishId как int
       final dishId = dishIdRaw is int
           ? dishIdRaw
           : int.tryParse(dishIdRaw.toString()) ?? (throw Exception('Invalid dishId'));
@@ -96,7 +94,7 @@ Future<Response> onRequest(RequestContext context) async {
       final serveAt = serveAtRaw != null ? DateTime.tryParse(serveAtRaw) : null;
 
       return OrderItemModel(
-        dishId: dishId, // Теперь это int
+        dishId: dishId,
         quantity: quantity,
         status: 'new',
         comment: comment,
@@ -105,13 +103,13 @@ Future<Response> onRequest(RequestContext context) async {
       );
     }).toList();
 
-    // Шаг 4: Добавляем позиции в заказ
-    await orderService.addOrderItems(orderId, items);
+    // Шаг 4: Вызываем новый "умный" метод синхронизации
+    await orderService.syncOrderItems(orderId, items);
 
-    return Response.json(body: {'message': 'Позиции успешно добавлены в заказ', 'orderId': orderId});
+    return Response.json(body: {'message': 'Заказ успешно синхронизирован', 'orderId': orderId});
 
   } catch (e, st) {
-    _log.severe('Ошибка при добавлении позиций в заказ', e, st);
+    _log.severe('Ошибка при синхронизации заказа', e, st);
     return Response.json(
       statusCode: 500,
       body: {'error': 'Внутренняя ошибка сервера'},

@@ -15,10 +15,8 @@ abstract class OrderRepository {
   /// Возвращает [Future] с объектом [Order] или `null`, если заказ не найден.
   Future<Order?> getOrder(String orderId);
 
-  /// Добавляет новые позиции в существующий заказ.
-  ///
-  /// Принимает [orderId] заказа и список [items] позиций заказа.
-  Future<void> addOrderItems(String orderId, List<OrderItem> items);
+  /// Синхронизирует состав заказа с состоянием, пришедшим от клиента.
+  Future<void> syncOrderItems(String orderId, List<OrderItem> items);
 
   /// Обновляет статус заказа.
   Future<void> updateOrderStatus({

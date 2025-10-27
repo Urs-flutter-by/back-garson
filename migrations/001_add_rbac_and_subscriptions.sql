@@ -73,7 +73,8 @@ INSERT INTO permissions (action_key, description) VALUES
     ('order:status:confirm', 'Подтверждение заказа клиента'),
     ('order:status:prepare', 'Взятие заказа в работу'),
     ('order:status:ready_for_pickup', 'Отметка заказа как готового'),
-    ('order:status:serve', 'Отметка заказа как поданного')
+    ('order:status:serve', 'Отметка заказа как поданного'),
+    ('order:status:out_of_stock', 'Отметка позиции как отсутствующей на складе')
 ON CONFLICT (action_key) DO NOTHING;
 
 -- Назначаем разрешения для роли "Администратор Ресторана"
