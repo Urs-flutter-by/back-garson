@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:back_garson/application/services/order_service.dart';
 import 'package:back_garson/data/models/order_item_model.dart';
 import 'package:back_garson/data/repositories/order_repository_impl.dart';
+import 'package:back_garson/domain/entities/auth_payload.dart';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:postgres/postgres.dart';
 
@@ -14,6 +15,7 @@ Future<Response> onRequest(RequestContext context, String orderId) async {
 
   final pool = context.read<Pool<void>>();
   final orderService = OrderService(OrderRepositoryImpl(pool));
+  final payload = context.read<AuthPayload>();
 
   try {
     final body = await context.request.body();
@@ -44,7 +46,7 @@ Future<Response> onRequest(RequestContext context, String orderId) async {
       );
     }).toList();
 
-    await orderService.syncOrderItems(orderId, items);
+    await orderService.syncOrderItems(orderId, items, payload);
     
     return Response.json(
       body: {'success': true, 'message': 'Order items synced successfully'},

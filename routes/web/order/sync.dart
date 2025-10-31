@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:back_garson/application/services/order_service.dart';
 import 'package:back_garson/data/models/order_item_model.dart';
+import 'package:back_garson/data/models/order_model.dart';
 import 'package:back_garson/data/repositories/order_repository_impl.dart';
-import 'package:back_garson/utils/config.dart';
+import 'package:back_garson/domain/entities/auth_payload.dart';
 import 'package:dart_frog/dart_frog.dart';
-import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
@@ -19,28 +19,14 @@ Future<Response> onRequest(RequestContext context) async {
 
   final pool = context.read<Pool<void>>();
   final orderService = OrderService(OrderRepositoryImpl(pool));
+  final payload = context.read<AuthPayload>();
+  final tableId = payload.tableId;
+
+  if (tableId == null) {
+    return Response.json(statusCode: 400, body: {'error': 'tableId not found in token'});
+  }
 
   try {
-    // Шаг 1: Аутентификация гостя по JWT-токену
-    final authHeader = context.request.headers[HttpHeaders.authorizationHeader];
-    if (authHeader == null || !authHeader.startsWith('Bearer ')) {
-      return Response.json(statusCode: 401, body: {'error': 'Требуется токен авторизации'});
-    }
-    final token = authHeader.substring(7);
-
-    String tableId;
-    try {
-      final jwt = JWT.verify(token, SecretKey(Config.jwtSecret));
-      final payload = jwt.payload as Map<String, dynamic>;
-      if (payload['role'] != 'CUSTOMER' || payload['tableId'] == null) {
-        throw Exception('Невалидный гостевой токен');
-      }
-      tableId = payload['tableId'] as String;
-    } catch (e) {
-      return Response.json(statusCode: 401, body: {'error': 'Невалидный или истекший токен'});
-    }
-
-    // Шаг 2: Найти активный заказ для столика или создать новый
     final activeOrderResult = await pool.withConnection((conn) => conn.execute(
           r'''
           SELECT order_id FROM orders 
@@ -54,65 +40,45 @@ Future<Response> onRequest(RequestContext context) async {
     if (activeOrderResult.isNotEmpty) {
       orderId = activeOrderResult.first.toColumnMap()['order_id'] as String;
     } else {
-      final newOrder = await orderService.createOrder(tableId);
+      final newOrder = await orderService.createOrder(tableId, sessionId: payload.sessionId);
       orderId = newOrder.orderId;
     }
 
-    // Шаг 3: Парсим тело запроса
     final body = await context.request.body();
     final json = jsonDecode(body) as Map<String, dynamic>;
     final itemsJson = json['items'] as List<dynamic>?;
 
     if (itemsJson == null) {
-      return Response.json(statusCode: 400, body: {'error': 'Поле items обязательно'});
+      return Response.json(statusCode: 400, body: {'error': 'items field is required'});
     }
 
     final items = itemsJson.map((itemJson) {
       final itemData = itemJson as Map<String, dynamic>;
-      final dishIdRaw = itemData['dishId'];
-      final quantityRaw = itemData['quantity'];
-      final comment = itemData['comment'] as String?;
-      final courseRaw = itemData['course'];
-      final serveAtRaw = itemData['serveAt'] as String?;
-
-      if (dishIdRaw == null) {
-        throw Exception('dishId is required for each item');
-      }
-      
-      final dishId = dishIdRaw is int
-          ? dishIdRaw
-          : int.tryParse(dishIdRaw.toString()) ?? (throw Exception('Invalid dishId'));
-
-      final quantity = quantityRaw is int
-          ? quantityRaw
-          : int.tryParse(quantityRaw.toString()) ?? 1;
-
-      final course = courseRaw is int
-          ? courseRaw
-          : int.tryParse(courseRaw?.toString() ?? '1') ?? 1;
-
-      final serveAt = serveAtRaw != null ? DateTime.tryParse(serveAtRaw) : null;
-
       return OrderItemModel(
-        dishId: dishId,
-        quantity: quantity,
-        status: 'new',
-        comment: comment,
-        course: course,
-        serveAt: serveAt,
+        dishId: itemData['dishId'] as int,
+        quantity: itemData['quantity'] as int,
+        status: 'new', // Status is handled by the backend
+        comment: itemData['comment'] as String?,
+        course: itemData['course'] as int? ?? 1,
+        serveAt: itemData['serveAt'] != null ? DateTime.tryParse(itemData['serveAt'] as String) : null,
       );
     }).toList();
 
-    // Шаг 4: Вызываем новый "умный" метод синхронизации
-    await orderService.syncOrderItems(orderId, items);
+    await orderService.syncOrderItems(orderId, items, payload);
 
-    return Response.json(body: {'message': 'Заказ успешно синхронизирован', 'orderId': orderId});
+    final updatedOrder = await orderService.getOrder(orderId);
+
+    if (updatedOrder == null) {
+      return Response.json(statusCode: 404, body: {'error': 'Order not found after sync'});
+    }
+
+    return Response.json(body: (updatedOrder as OrderModel).toJson());
 
   } catch (e, st) {
-    _log.severe('Ошибка при синхронизации заказа', e, st);
+    _log.severe('Error syncing order', e, st);
     return Response.json(
       statusCode: 500,
-      body: {'error': 'Внутренняя ошибка сервера'},
+      body: {'error': 'Internal server error'},
     );
   }
 }

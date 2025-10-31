@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:back_garson/application/services/order_service.dart';
 import 'package:back_garson/data/models/order_model.dart';
 import 'package:back_garson/data/models/restaurant_model.dart';
 import 'package:back_garson/data/models/restaurant_themes_model.dart';
@@ -8,15 +9,18 @@ import 'package:back_garson/data/repositories/order_repository_impl.dart';
 import 'package:back_garson/data/repositories/restaurant_repository_impl.dart';
 import 'package:back_garson/data/repositories/restaurant_theme_repository_impl.dart';
 import 'package:back_garson/data/repositories/table_repository_impl.dart';
+import 'package:back_garson/domain/entities/order.dart';
 import 'package:back_garson/utils/config.dart';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
-/// Обрабатывает первоначальный запрос от клиента, сканирующего QR-код.
-/// Собирает всю необходимую для старта информацию и генерирует гостевой токен.
+final _log = Logger('StatusRoute');
+
 Future<Response> onRequest(RequestContext context, String tableId) async {
+  _log.info('Запрос на /web/status/$tableId');
   if (context.request.method != HttpMethod.get) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
@@ -26,53 +30,83 @@ Future<Response> onRequest(RequestContext context, String tableId) async {
   final restaurantRepo = RestaurantRepositoryImpl(pool);
   final themeRepo = RestaurantThemeRepositoryImpl(pool);
   final orderRepo = OrderRepositoryImpl(pool);
+  final orderService = OrderService(orderRepo);
 
   try {
-    // Шаг 1: Получаем данные о столике.
     final table = await tableRepo.getTableById(tableId);
     final restaurantId = table.restaurantId;
 
-    // Шаг 2: Параллельно запрашиваем данные о ресторане, теме и активном заказе.
     final futures = <Future<dynamic>>[
       restaurantRepo.getRestaurantById(restaurantId),
       themeRepo.getRestaurantThemeById(restaurantId),
-      orderRepo.findActiveOrderByTable(tableId),
     ];
     final results = await Future.wait(futures);
-    
     final restaurant = results[0] as RestaurantModel;
     final theme = results[1] as RestaurantThemeModel;
-    // Результат может быть null, если заказа нет
-    final activeOrder = results[2] as OrderModel?;
 
-    // Шаг 3: Генерируем гостевой JWT.
-    final jwt = JWT(
-      {
+    String? token;
+    Order? order;
+    String? sessionId;
+
+    final authHeader = context.request.headers[HttpHeaders.authorizationHeader];
+    if (authHeader != null && authHeader.startsWith('Bearer ')) {
+      final receivedToken = authHeader.substring(7);
+      try {
+        final jwt = JWT.verify(receivedToken, SecretKey(Config.jwtSecret));
+        final payload = jwt.payload as Map<String, dynamic>;
+        sessionId = payload['sessionId'] as String?;
+
+        if (sessionId != null) {
+          _log.info('Найден sessionId $sessionId в токене.');
+          final orderId = await orderRepo.findActiveOrderIdBySession(sessionId);
+          if (orderId != null) {
+            _log.info('Найден активный заказ $orderId для этой сессии.');
+            order = await orderRepo.getOrder(orderId);
+          }
+        }
+        if (order != null) {
+          token = receivedToken;
+        }
+      } catch (_) {
+        // Токен невалидный, будем создавать новую сессию
+      }
+    }
+
+    if (order == null) {
+      _log.info('Активный заказ по сессии не найден, ищем для столика...');
+      order = await orderRepo.findActiveOrderByTable(tableId);
+      sessionId = const Uuid().v4(); // В любом случае создаем новую сессию
+
+      if (order == null) {
+        _log.info('Активный заказ для столика не найден, создаю новый заказ с новой сессией $sessionId');
+        order = await orderService.createOrder(tableId, sessionId: sessionId);
+      } else {
+        _log.info('Найден заказ ${order.orderId}, привязываю к нему новую сессию $sessionId');
+        await orderRepo.updateSessionId(order.orderId, sessionId);
+      }
+    }
+
+    if (token == null) {
+      final jwt = JWT({
         'role': 'CUSTOMER',
         'tableId': table.id,
         'restaurantId': restaurantId,
-        'sessionId': const Uuid().v4(),
-        'iat': DateTime.now().millisecondsSinceEpoch,
-      },
-    );
-    final token = jwt.sign(
-      SecretKey(Config.jwtSecret),
-      expiresIn: const Duration(hours: 24),
-    );
+        'sessionId': sessionId,
+      });
+      token = jwt.sign(SecretKey(Config.jwtSecret), expiresIn: const Duration(hours: 24));
+    }
 
-    // Шаг 4: Собираем и возвращаем итоговый JSON.
     return Response.json(
       body: {
         'token': token,
         'table': (table as TableModel).toJson(),
         'restaurant': restaurant.toJson(),
         'theme': theme.toJson(),
-        // Если заказа нет, возвращаем пустой объект заказа
-        'order': activeOrder?.toJson() ?? {'orderId': '', 'items': []},
+        'order': (order as OrderModel).toJson(),
       },
     );
-  } catch (e) {
-    // Если любой из запросов не удался, возвращаем ошибку.
+  } catch (e, st) {
+    _log.severe('Ошибка в /web/status/$tableId', e, st);
     return Response.json(
       statusCode: HttpStatus.notFound,
       body: {'error': 'Не удалось загрузить данные: $e'},
