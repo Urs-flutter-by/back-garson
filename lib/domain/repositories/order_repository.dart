@@ -14,14 +14,17 @@ abstract class OrderRepository {
   /// Возвращает [Future] с объектом [Order] или `null`, если заказ не найден.
   Future<Order?> getOrder(String orderId);
 
-  /// Синхронизирует состав заказа с состоянием, пришедшим от клиента.
-  Future<void> syncOrderItems(String orderId, List<OrderItem> items, AuthPayload actor);
+  /// Выполняет "умную" синхронизацию (сравнение) позиций заказа.
+  Future<void> diffAndSyncItems(String orderId, List<OrderItem> items, AuthPayload actor);
+
+  /// Выполняет "чистую" вставку всех позиций заказа без сравнения.
+  Future<void> bulkInsertItems(String orderId, List<OrderItem> items);
 
   /// Обновляет статус заказа.
   Future<void> updateOrderStatus({
     required String orderId,
     required String newStatus,
-    required String actorId,
+    required String? actorId,
   });
 
   /// Находит активный (незавершенный) заказ для столика.

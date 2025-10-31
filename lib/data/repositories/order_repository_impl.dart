@@ -108,7 +108,7 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<void> syncOrderItems(
+  Future<void> diffAndSyncItems(
       String orderId, List<OrderItem> items, AuthPayload actor) async {
     try {
       await pool.runTx((ctx) async {
@@ -143,7 +143,8 @@ class OrderRepositoryImpl implements OrderRepository {
         if (itemsToDelete.isNotEmpty) {
           await ctx.execute(
             Sql.named(
-                'DELETE FROM order_items WHERE order_id = @orderId AND dish_id = ANY(@dishIds)'),
+                'DELETE FROM order_items WHERE order_id = @orderId AND dish_id'
+                ' = ANY(@dishIds)'),
             parameters: {
               'orderId': orderId,
               'dishIds': itemsToDelete,
@@ -191,8 +192,35 @@ class OrderRepositoryImpl implements OrderRepository {
         }
       });
     } catch (e, st) {
-      _log.severe('Error in syncOrderItems', e, st);
+      _log.severe('Error in diffAndSyncItems', e, st);
       throw Exception('Failed to sync order items: $e');
+    }
+  }
+
+  @override
+  Future<void> bulkInsertItems(String orderId, List<OrderItem> items) async {
+    try {
+      await pool.runTx((ctx) async {
+        for (final item in items) {
+          await ctx.execute(
+            r'''
+            INSERT INTO order_items (order_id, dish_id, quantity, status, created_at, comment, course, serve_at)
+            VALUES ($1, $2, $3, 'pending_confirmation', CURRENT_TIMESTAMP, $4, $5, $6)
+            ''',
+            parameters: [
+              orderId,
+              item.dishId,
+              item.quantity,
+              item.comment,
+              item.course,
+              item.serveAt,
+            ],
+          );
+        }
+      });
+    } catch (e, st) {
+      _log.severe('Error in bulkInsertItems', e, st);
+      throw Exception('Failed to bulk insert order items: $e');
     }
   }
 
@@ -200,7 +228,7 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<void> updateOrderStatus({
     required String orderId,
     required String newStatus,
-    required String actorId,
+    required String? actorId,
   }) async {
     try {
       await pool.runTx((ctx) async {
@@ -262,7 +290,6 @@ class OrderRepositoryImpl implements OrderRepository {
           ));
     } catch (e, st) {
       _log.severe('Error in updateSessionId', e, st);
-      // TODO: implement updateSessionId
       throw Exception('Failed to update session ID for order: $e');
     }
   }

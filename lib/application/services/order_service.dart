@@ -29,28 +29,32 @@ class OrderService {
       await updateOrderStatus(
         orderId: orderId,
         newStatus: 'pending_confirmation',
-        actor: actor,
+        actorId: actor.userId,
       );
     }
 
-    return repository.syncOrderItems(orderId, items, actor);
+    // Если заказ новый, используем bulkInsert, иначе - diffAndSync
+    if (order != null && order.status == 'new') {
+      return repository.bulkInsertItems(orderId, items);
+    } else {
+      return repository.diffAndSyncItems(orderId, items, actor);
+    }
   }
 
   Future<void> updateOrderStatus({
     required String orderId,
     required String newStatus,
-    required AuthPayload actor,
+    required String? actorId,
   }) async {
     _log.info(
-      'User ${actor.userId ?? actor.sessionId} is changing status of order $orderId to $newStatus',
+      'User ${actorId} is changing status of order $orderId to $newStatus',
     );
 
     await repository.updateOrderStatus(
       orderId: orderId,
       newStatus: newStatus,
-      actorId: actor.userId ?? actor.sessionId!,
+      actorId: actorId,
     );
-
     final order = await repository.getOrder(orderId);
     if (order == null) return;
 
@@ -66,10 +70,10 @@ class OrderService {
     if (order.waiterId != null) targets.add(order.waiterId!);
     if (order.chefId != null) targets.add(order.chefId!);
 
-    // TODO: Add logic to notify the customer.
+    /// TODO: Add logic to notify the customer.
 
     for (final targetId in targets) {
-      if (targetId != actor.userId) {
+      if (actorId != targetId) {
         ConnectionManager.instance.sendMessage(targetId, message);
       }
     }
