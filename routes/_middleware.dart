@@ -1,8 +1,5 @@
 import 'dart:io';
-
 import 'package:back_garson/data/sources/database.dart';
-import 'package:back_garson/presentation/middleware/authentication_middleware.dart';
-import 'package:back_garson/presentation/middleware/subscription_status_middleware.dart';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';

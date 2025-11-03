@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:back_garson/domain/entities/auth_payload.dart';
 import 'package:back_garson/presentation/middleware/authentication_middleware.dart';
 import 'package:back_garson/presentation/middleware/authorization_middleware.dart';

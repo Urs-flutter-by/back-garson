@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:back_garson/application/services/order_service.dart';
 import 'package:back_garson/data/models/order_item_model.dart';
 import 'package:back_garson/data/models/order_model.dart';
@@ -23,7 +21,8 @@ Future<Response> onRequest(RequestContext context) async {
   final tableId = payload.tableId;
 
   if (tableId == null) {
-    return Response.json(statusCode: 400, body: {'error': 'tableId not found in token'});
+    return Response.json(
+        statusCode: 400, body: {'error': 'tableId not found in token'});
   }
 
   try {
@@ -40,7 +39,8 @@ Future<Response> onRequest(RequestContext context) async {
     if (activeOrderResult.isNotEmpty) {
       orderId = activeOrderResult.first.toColumnMap()['order_id'] as String;
     } else {
-      final newOrder = await orderService.createOrder(tableId, sessionId: payload.sessionId);
+      final newOrder =
+          await orderService.createOrder(tableId, sessionId: payload.sessionId);
       orderId = newOrder.orderId;
     }
 
@@ -49,7 +49,8 @@ Future<Response> onRequest(RequestContext context) async {
     final itemsJson = json['items'] as List<dynamic>?;
 
     if (itemsJson == null) {
-      return Response.json(statusCode: 400, body: {'error': 'items field is required'});
+      return Response.json(
+          statusCode: 400, body: {'error': 'items field is required'});
     }
 
     final items = itemsJson.map((itemJson) {
@@ -60,7 +61,9 @@ Future<Response> onRequest(RequestContext context) async {
         status: 'new', // Status is handled by the backend
         comment: itemData['comment'] as String?,
         course: itemData['course'] as int? ?? 1,
-        serveAt: itemData['serveAt'] != null ? DateTime.tryParse(itemData['serveAt'] as String) : null,
+        serveAt: itemData['serveAt'] != null
+            ? DateTime.tryParse(itemData['serveAt'] as String)
+            : null,
       );
     }).toList();
 
@@ -69,11 +72,11 @@ Future<Response> onRequest(RequestContext context) async {
     final updatedOrder = await orderService.getOrder(orderId);
 
     if (updatedOrder == null) {
-      return Response.json(statusCode: 404, body: {'error': 'Order not found after sync'});
+      return Response.json(
+          statusCode: 404, body: {'error': 'Order not found after sync'});
     }
 
     return Response.json(body: (updatedOrder as OrderModel).toJson());
-
   } catch (e, st) {
     _log.severe('Error syncing order', e, st);
     return Response.json(

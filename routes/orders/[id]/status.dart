@@ -20,14 +20,17 @@ Future<Response> onRequest(RequestContext context, String orderId) async {
     final newStatus = body['newStatus'] as String?;
 
     if (newStatus == null) {
-      return Response.json(statusCode: 400, body: {'error': 'Поле newStatus обязательно'});
+      return Response.json(
+          statusCode: 400, body: {'error': 'Поле newStatus обязательно'});
     }
 
     // Вызываем сервис для выполнения всей логики
-    await orderService.updateOrderStatus(orderId: orderId, newStatus: newStatus, actor: payload);
+    await orderService.updateOrderStatus(
+        orderId: orderId,
+        newStatus: newStatus,
+        actorId: payload.userId ?? payload.sessionId!);
 
     return Response.json(body: {'message': 'Статус заказа успешно обновлен'});
-
   } catch (e) {
     return Response.json(
       statusCode: 500,
