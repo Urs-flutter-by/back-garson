@@ -58,7 +58,7 @@ class OrderRepositoryImpl implements OrderRepository {
 
         final itemsResult = await connection.execute(
           r'''
-          SELECT oi.dish_id, oi.quantity, oi.status, oi.comment, oi.course, oi.serve_at,
+          SELECT oi.id, oi.dish_id, oi.quantity, oi.status, oi.comment, oi.course, oi.serve_at,
                  d.id as dish_table_id, d.name, d.description, d.price, d.weight, d.image_urls, d.is_available
           FROM order_items oi JOIN dishes d ON oi.dish_id = d.id
           WHERE oi.order_id = $1
@@ -82,6 +82,7 @@ class OrderRepositoryImpl implements OrderRepository {
           );
           items.add(
             OrderItemModel(
+              id: itemMap['id'] as int?,
               dishId: itemMap['dish_id'] as int,
               quantity: itemMap['quantity'] as int,
               status: itemMap['status'] as String,
@@ -112,68 +113,47 @@ class OrderRepositoryImpl implements OrderRepository {
       String orderId, List<OrderItem> items, AuthPayload actor) async {
     try {
       await pool.runTx((ctx) async {
+        // 1. Get current items from DB, mapped by their unique ID
         final dbItemsResult = await ctx.execute(
-          r'''SELECT dish_id, quantity, status FROM order_items WHERE order_id = $1''',
+          r'''SELECT id, dish_id, quantity, status, comment FROM order_items WHERE order_id = $1''',
           parameters: [orderId],
         );
 
         final dbItems = <int, Map<String, dynamic>>{};
         for (final row in dbItemsResult) {
           final map = row.toColumnMap();
-          dbItems[map['dish_id'] as int] = {
+          dbItems[map['id'] as int] = {
             'quantity': map['quantity'] as int,
             'status': map['status'] as String,
+            'comment': map['comment'] as String?,
           };
         }
 
-        final clientItems = <int, OrderItem>{};
-        for (final item in items) {
-          clientItems[item.dishId] = item;
-        }
+        final clientItemIds = items.map((item) => item.id).whereType<int>().toSet();
 
+        // 2. Find and delete items that are in the DB but not in the client's list
         final itemsToDelete = <int>[];
-        for (final dbDishId in dbItems.keys) {
-          if (!clientItems.containsKey(dbDishId)) {
-            final status = dbItems[dbDishId]!['status'] as String?;
+        for (final dbItemId in dbItems.keys) {
+          if (!clientItemIds.contains(dbItemId)) {
+            final status = dbItems[dbItemId]!['status'] as String?;
+            // Only allow deletion if item is new or pending
             if (status == 'new' || status == 'pending_confirmation') {
-              itemsToDelete.add(dbDishId);
+              itemsToDelete.add(dbItemId);
             }
           }
         }
+
         if (itemsToDelete.isNotEmpty) {
           await ctx.execute(
-            Sql.named(
-                'DELETE FROM order_items WHERE order_id = @orderId AND dish_id'
-                ' = ANY(@dishIds)'),
-            parameters: {
-              'orderId': orderId,
-              'dishIds': itemsToDelete,
-            },
+            Sql.named('DELETE FROM order_items WHERE id = ANY(@ids)'),
+            parameters: {'ids': itemsToDelete},
           );
         }
 
+        // 3. Insert new items and update existing ones
         for (final clientItem in items) {
-          final dishId = clientItem.dishId;
-          if (dbItems.containsKey(dishId)) {
-            final dbItem = dbItems[dishId]!;
-            final status = dbItem['status'] as String?;
-            if (status == 'new' || status == 'pending_confirmation') {
-              if (dbItem['quantity'] != clientItem.quantity ||
-                  dbItem['comment'] != clientItem.comment) {
-                await ctx.execute(
-                  r'''UPDATE order_items SET quantity = $1, comment = $2, course = $3, serve_at = $4 WHERE order_id = $5 AND dish_id = $6''',
-                  parameters: [
-                    clientItem.quantity,
-                    clientItem.comment,
-                    clientItem.course,
-                    clientItem.serveAt,
-                    orderId,
-                    dishId
-                  ],
-                );
-              }
-            }
-          } else {
+          if (clientItem.id == null) {
+            // It's a new item, INSERT it
             await ctx.execute(
               r'''
               INSERT INTO order_items (order_id, dish_id, quantity, status, created_at, comment, course, serve_at)
@@ -181,13 +161,34 @@ class OrderRepositoryImpl implements OrderRepository {
               ''',
               parameters: [
                 orderId,
-                dishId,
+                clientItem.dishId,
                 clientItem.quantity,
                 clientItem.comment,
                 clientItem.course,
                 clientItem.serveAt,
               ],
             );
+          } else {
+            // It's an existing item, check if it needs an UPDATE
+            final dbItem = dbItems[clientItem.id];
+            if (dbItem != null) {
+              final status = dbItem['status'] as String?;
+              // Only allow update if item is new or pending
+              if (status == 'new' || status == 'pending_confirmation') {
+                if (dbItem['quantity'] != clientItem.quantity || dbItem['comment'] != clientItem.comment) {
+                  await ctx.execute(
+                    r'''UPDATE order_items SET quantity = $1, comment = $2, course = $3, serve_at = $4 WHERE id = $5''',
+                    parameters: [
+                      clientItem.quantity,
+                      clientItem.comment,
+                      clientItem.course,
+                      clientItem.serveAt,
+                      clientItem.id,
+                    ],
+                  );
+                }
+              }
+            }
           }
         }
       });

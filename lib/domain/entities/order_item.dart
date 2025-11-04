@@ -7,6 +7,7 @@ import 'package:back_garson/domain/entities/dish.dart';
 class OrderItem {
   /// Создает экземпляр [OrderItem].
   OrderItem({
+    this.id,
     required this.dishId,
     required this.quantity,
     required this.status,
@@ -18,6 +19,9 @@ class OrderItem {
     this.course = 1, // По умолчанию курс 1
     this.serveAt,
   });
+
+  /// Уникальный идентификатор позиции заказа.
+  final int? id;
 
   /// Идентификатор блюда.
   final int dishId;

@@ -56,6 +56,7 @@ Future<Response> onRequest(RequestContext context) async {
     final items = itemsJson.map((itemJson) {
       final itemData = itemJson as Map<String, dynamic>;
       return OrderItemModel(
+        id: itemData['id'] as int?,
         dishId: itemData['dishId'] as int,
         quantity: itemData['quantity'] as int,
         status: 'new', // Status is handled by the backend
