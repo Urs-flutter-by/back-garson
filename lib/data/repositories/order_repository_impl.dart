@@ -129,15 +129,16 @@ class OrderRepositoryImpl implements OrderRepository {
           };
         }
 
-        final clientItemIds = items.map((item) => item.id).whereType<int>().toSet();
+        final clientItemIds =
+            items.map((item) => item.id).whereType<int>().toSet();
 
         // 2. Find and delete items that are in the DB but not in the client's list
         final itemsToDelete = <int>[];
         for (final dbItemId in dbItems.keys) {
           if (!clientItemIds.contains(dbItemId)) {
             final status = dbItems[dbItemId]!['status'] as String?;
-            // Only allow deletion if item is new or pending
-            if (status == 'new' || status == 'pending_confirmation') {
+            // Only allow deletion if item is new, pending, or confirmed
+            if (status == 'new' || status == 'pending_confirmation' || status == 'confirmed') {
               itemsToDelete.add(dbItemId);
             }
           }
@@ -173,9 +174,12 @@ class OrderRepositoryImpl implements OrderRepository {
             final dbItem = dbItems[clientItem.id];
             if (dbItem != null) {
               final status = dbItem['status'] as String?;
-              // Only allow update if item is new or pending
-              if (status == 'new' || status == 'pending_confirmation') {
-                if (dbItem['quantity'] != clientItem.quantity || dbItem['comment'] != clientItem.comment) {
+              // Only allow update if item is new, pending, or confirmed
+              if (status == 'new' ||
+                  status == 'pending_confirmation' ||
+                  status == 'confirmed') {
+                if (dbItem['quantity'] != clientItem.quantity ||
+                    dbItem['comment'] != clientItem.comment) {
                   await ctx.execute(
                     r'''UPDATE order_items SET quantity = $1, comment = $2, course = $3, serve_at = $4 WHERE id = $5''',
                     parameters: [
